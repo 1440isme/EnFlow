@@ -1,8 +1,11 @@
 package vn.enflow.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -53,10 +56,9 @@ public class Status {
     // ── Relationships với entity chưa tồn tại (mở comment khi tạo entity) ───
 
     // tasks.status_id → statuses.status_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "status", cascade = CascadeType.ALL, fetch =
-    // FetchType.LAZY)
-    // List<Task> tasks;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "status", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Task> tasks;
 }

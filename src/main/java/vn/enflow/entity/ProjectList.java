@@ -58,10 +58,9 @@ public class ProjectList {
     // ── Relationships với entity chưa tồn tại (mở comment khi tạo entity) ───
 
     // tasks.list_id → lists.list_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "list", cascade = CascadeType.ALL, fetch =
-    // FetchType.LAZY)
-    // List<Task> tasks;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "list", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Task> tasks;
 }

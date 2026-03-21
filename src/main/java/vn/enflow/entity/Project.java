@@ -68,12 +68,11 @@ public class Project {
     // ── Relationships với entity chưa tồn tại (mở comment khi tạo entity) ───
 
     // tasks.project_id → projects.project_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch =
-    // FetchType.LAZY)
-    // List<Task> tasks;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Task> tasks;
 
     // activity_logs.project_id → projects.project_id
     // @JsonIgnore
