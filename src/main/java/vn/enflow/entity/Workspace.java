@@ -55,11 +55,11 @@ public class Workspace {
     // ── Relationships với entity chưa tồn tại (mở comment khi tạo entity) ───
 
     // projects.workspace_id → workspaces.workspace_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // List<Project> projects;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Project> projects;
 
     // tags.workspace_id → workspaces.workspace_id
     // @JsonIgnore
