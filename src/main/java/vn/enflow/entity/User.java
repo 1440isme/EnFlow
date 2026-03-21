@@ -85,23 +85,23 @@ public class User {
     List<TaskAssignee> taskAssignments;
 
     // comments.user_id → users.user_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // List<Comment> comments;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Comment> comments;
 
     // attachments.uploaded_by → users.user_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "uploadedBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // List<Attachment> uploadedAttachments;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "uploader", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Attachment> uploadedAttachments;
 
     // activity_logs.actor_id → users.user_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // List<ActivityLog> activityLogs;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<ActivityLog> activityLogs;
 }
