@@ -62,11 +62,11 @@ public class Workspace {
     List<Project> projects;
 
     // tags.workspace_id → workspaces.workspace_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // List<Tag> tags;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Tag> tags;
 
     // activity_logs.workspace_id → workspaces.workspace_id
     // @JsonIgnore

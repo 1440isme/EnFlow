@@ -70,25 +70,19 @@ public class User {
     List<Project> createdProjects;
 
     // tasks.reporter_id → users.user_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "reporter", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // List<Task> reportedTasks;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "reporter", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Task> reportedTasks;
 
-    // tasks.creator_id → users.user_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // List<Task> createdTasks;
 
     // task_assignees.user_id → users.user_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // List<TaskAssignee> taskAssignments;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<TaskAssignee> taskAssignments;
 
     // comments.user_id → users.user_id
     // @JsonIgnore
