@@ -75,10 +75,9 @@ public class Project {
     List<Task> tasks;
 
     // activity_logs.project_id → projects.project_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch =
-    // FetchType.LAZY)
-    // List<ActivityLog> activityLogs;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<ActivityLog> activityLogs;
 }
