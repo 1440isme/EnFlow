@@ -63,11 +63,11 @@ public class User {
     // ── Relationships với entity chưa tồn tại (mở comment khi tạo entity) ───
 
     // projects.created_by → users.user_id
-    // @JsonIgnore
-    // @ToString.Exclude
-    // @EqualsAndHashCode.Exclude
-    // @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // List<Project> createdProjects;
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    List<Project> createdProjects;
 
     // tasks.reporter_id → users.user_id
     // @JsonIgnore
