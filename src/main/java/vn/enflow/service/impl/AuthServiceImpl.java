@@ -1,5 +1,6 @@
 package vn.enflow.service.impl;
 
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -13,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import vn.enflow.dto.request.LoginRequest;
 import vn.enflow.dto.request.RegisterRequest;
 import vn.enflow.dto.request.UserCreationRequest;
+import vn.enflow.dto.request.WorkspaceRequest;
 import vn.enflow.dto.respone.AuthResponse;
 import vn.enflow.dto.respone.UserResponse;
 import vn.enflow.entity.User;
@@ -21,6 +23,7 @@ import vn.enflow.repository.UserRepository;
 import vn.enflow.security.JwtService;
 import vn.enflow.service.IAuthService;
 import vn.enflow.service.IUserService;
+import vn.enflow.service.IWorkspaceService;
 
 @Service
 @RequiredArgsConstructor
@@ -28,12 +31,14 @@ import vn.enflow.service.IUserService;
 public class AuthServiceImpl implements IAuthService {
 
     IUserService userService;
+    IWorkspaceService workspaceService;
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     JwtService jwtService;
 
     @Override
+    @Transactional(rollbackOn = Exception.class)
     public AuthResponse register(RegisterRequest request) {
         if (!StringUtils.hasText(request.getFullName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Họ tên không được để trống");
@@ -52,6 +57,13 @@ public class AuthServiceImpl implements IAuthService {
                     .email(emailNormalized)
                     .password(request.getPassword())
                     .fullName(request.getFullName().trim())
+                    .build());
+            workspaceService.create(WorkspaceRequest.builder()
+                    .name(request.getFullName().trim() + " – Cá nhân")
+                    .workspaceKey("personal-" + created.getUserId())
+                    .description("Không gian cá nhân")
+                    .ownerUserId(created.getUserId())
+                    .isPrivate(true)
                     .build());
             User entity = userRepository.findById(created.getUserId())
                     .orElseThrow(() -> new IllegalStateException("Không tải lại được user vừa tạo"));
