@@ -1,0 +1,88 @@
+package vn.enflow.service.impl;
+
+import jakarta.transaction.Transactional;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.stereotype.Service;
+import vn.enflow.dto.request.ProjectListCreatetionRequest;
+import vn.enflow.dto.request.ProjectListUpdateRequest;
+import vn.enflow.dto.respone.ProjectListResponse;
+import vn.enflow.entity.Project;
+import vn.enflow.entity.ProjectList;
+import vn.enflow.mapper.ProjectListMapper;
+import vn.enflow.repository.ProjectListRepository;
+import vn.enflow.repository.ProjectRepository;
+import vn.enflow.service.IProjectListService;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class ProjectListServiceImpl implements IProjectListService {
+
+    ProjectListRepository projectListRepository;
+    ProjectRepository projectRepository;
+    ProjectListMapper projectListMapper;
+
+    @Override
+    @Transactional
+    public ProjectListResponse createtionProjectList(Long projectId, ProjectListCreatetionRequest request) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+
+        ProjectList projectList = projectListMapper.toProjectList(request);
+        projectList.setProject(project);
+
+        LocalDateTime now = LocalDateTime.now();
+        projectList.setCreatedAt(now);
+        projectList.setUpdatedAt(now);
+
+        if (projectList.getPosition() == null) projectList.setPosition(0);
+        if (projectList.getIsPrivate() == null) projectList.setIsPrivate(false);
+        if (projectList.getArchived() == null) projectList.setArchived(false);
+
+        ProjectList saved = projectListRepository.save(projectList);
+        return projectListMapper.toProjectListResponse(saved);
+    }
+
+    @Override
+    public ProjectListResponse getProjectListById(Long listId) {
+        ProjectList projectList = projectListRepository.findById(listId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
+        return projectListMapper.toProjectListResponse(projectList);
+    }
+
+    @Override
+    public List<ProjectListResponse> getProjectListsByProjectId(Long projectId) {
+        if (!projectRepository.existsById(projectId)) {
+            throw new RuntimeException("Không tìm thấy project với id: " + projectId);
+        }
+        return projectListRepository.findByProject_ProjectId(projectId).stream()
+                .map(projectListMapper::toProjectListResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public ProjectListResponse updateProjectList(Long listId, ProjectListUpdateRequest request) {
+        ProjectList projectList = projectListRepository.findById(listId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
+
+        projectListMapper.updateProjectList(projectList, request);
+        projectList.setUpdatedAt(LocalDateTime.now());
+
+        return projectListMapper.toProjectListResponse(projectListRepository.save(projectList));
+    }
+
+    @Override
+    @Transactional
+    public void deleteProjectList(Long listId) {
+        if (!projectListRepository.existsById(listId)) {
+            throw new RuntimeException("Không tìm thấy list với id: " + listId);
+        }
+        projectListRepository.deleteById(listId);
+    }
+}
