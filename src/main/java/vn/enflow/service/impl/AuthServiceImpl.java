@@ -22,8 +22,6 @@ import vn.enflow.security.JwtService;
 import vn.enflow.service.IAuthService;
 import vn.enflow.service.IUserService;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -46,19 +44,11 @@ public class AuthServiceImpl implements IAuthService {
         if (!StringUtils.hasText(request.getPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu không được để trống");
         }
-        String emailNormalized = request.getEmail().trim().toLowerCase();
-        int at = emailNormalized.indexOf('@');
-        if (at <= 0 || at == emailNormalized.length() - 1) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không hợp lệ");
-        }
-        String localPart = emailNormalized.substring(0, at);
-        if (!StringUtils.hasText(localPart)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không hợp lệ");
-        }
-        String username = resolveUniqueUsername(sanitizeUsernameLocalPart(localPart));
+        String emailNormalized = normalizeEmailOrThrow(request.getEmail());
+        // Username trong DB = email (định danh duy nhất; xác thực/xác minh sau này đều qua email).
         try {
             UserResponse created = userService.createUser(UserCreationRequest.builder()
-                    .username(username)
+                    .username(emailNormalized)
                     .email(emailNormalized)
                     .password(request.getPassword())
                     .fullName(request.getFullName().trim())
@@ -80,10 +70,13 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         if (!StringUtils.hasText(request.getUsernameOrEmail()) || !StringUtils.hasText(request.getPassword())) {
-            throw new BadCredentialsException("Thiếu email/username hoặc mật khẩu");
+            throw new BadCredentialsException("Thiếu email hoặc mật khẩu");
         }
-        String key = request.getUsernameOrEmail().trim();
-        User user = resolveUserForLogin(key)
+        String email = normalizeEmailForLogin(request.getUsernameOrEmail());
+        if (email == null) {
+            throw new BadCredentialsException("Email không hợp lệ");
+        }
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("Sai thông tin đăng nhập"));
         if (Boolean.FALSE.equals(user.getIsActive())) {
             throw new BadCredentialsException("Tài khoản đã bị vô hiệu hóa");
@@ -103,35 +96,26 @@ public class AuthServiceImpl implements IAuthService {
                 .build();
     }
 
-    /** Phần local của email, chỉ giữ ký tự an toàn cho username; rỗng thì fallback. */
-    private static String sanitizeUsernameLocalPart(String local) {
-        String cleaned = local.replaceAll("[^a-zA-Z0-9._-]", "_").replaceAll("_{2,}", "_");
-        cleaned = cleaned.replaceAll("^_+|_+$", "");
-        if (!StringUtils.hasText(cleaned)) {
-            cleaned = "user";
+    /** Đăng ký: trim, lowercase, kiểm tra có @ hợp lệ. */
+    private static String normalizeEmailOrThrow(String raw) {
+        String email = raw.trim().toLowerCase();
+        int at = email.indexOf('@');
+        if (at <= 0 || at == email.length() - 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email không hợp lệ");
         }
-        if (cleaned.length() > 50) {
-            cleaned = cleaned.substring(0, 50);
-        }
-        return cleaned.toLowerCase();
+        return email;
     }
 
-    private String resolveUniqueUsername(String base) {
-        String candidate = base;
-        int n = 1;
-        while (userRepository.existsByUsername(candidate)) {
-            String suffix = "_" + n++;
-            int maxBase = Math.max(1, 50 - suffix.length());
-            candidate = base.substring(0, Math.min(base.length(), maxBase)) + suffix;
+    /**
+     * Đăng nhập: field vẫn là {@code usernameOrEmail} nhưng chỉ tra cứu theo email đã chuẩn hóa
+     * (phải có dấu {@code @}).
+     */
+    private static String normalizeEmailForLogin(String raw) {
+        String email = raw.trim().toLowerCase();
+        int at = email.indexOf('@');
+        if (at <= 0 || at == email.length() - 1) {
+            return null;
         }
-        return candidate;
-    }
-
-    /** Có dấu @ → coi là email (chuẩn hóa lowercase); không có → username (không phân biệt hoa thường). */
-    private Optional<User> resolveUserForLogin(String key) {
-        if (key.contains("@")) {
-            return userRepository.findByEmail(key.toLowerCase());
-        }
-        return userRepository.findByUsername(key.toLowerCase());
+        return email;
     }
 }
