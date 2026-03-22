@@ -1,0 +1,15 @@
+package vn.enflow.service;
+
+import vn.enflow.dto.request.TaskAssigneeRequest;
+import vn.enflow.dto.request.TaskAssigneeUpdateRequest;
+import vn.enflow.dto.respone.TaskAssigneeResponse;
+
+import java.util.List;
+
+public interface ITaskAssigneeService {
+    TaskAssigneeResponse addAssignee(Long taskId, TaskAssigneeRequest request);
+    List<TaskAssigneeResponse> getAssigneesByTaskId(Long taskId);
+    List<TaskAssigneeResponse> getAssignmentsByUserId(Long userId);
+    TaskAssigneeResponse updateAssignee(Long taskId, Long userId, TaskAssigneeUpdateRequest request);
+    void removeAssignee(Long taskId, Long userId);
+}
