@@ -3,14 +3,17 @@ package vn.enflow.service.impl;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 import jakarta.transaction.Transactional;
 
 import vn.enflow.dto.request.ChangePasswordRequest;
 import vn.enflow.dto.request.UserCreationRequest;
 import vn.enflow.dto.request.UserUpdateRequest;
+import vn.enflow.dto.respone.UserPublicLookupResponse;
 import vn.enflow.dto.respone.UserResponse;
 import vn.enflow.entity.User;
 import vn.enflow.mapper.UserMapper;
@@ -77,6 +80,21 @@ public class UserServiceImpl implements IUserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         return userMapper.toUserResponse(userRepository.save(user));
+    }
+
+    @Override
+    public UserPublicLookupResponse lookupByEmail(String emailNormalized) {
+        User user = userRepository.findByEmail(emailNormalized)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+        if (Boolean.FALSE.equals(user.getIsActive())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này");
+        }
+        return UserPublicLookupResponse.builder()
+                .userId(user.getUserId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .avatarUrl(user.getAvatarUrl())
+                .build();
     }
 
     @Override

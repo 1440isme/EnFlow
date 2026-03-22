@@ -6,12 +6,19 @@ import java.util.Optional;
 import vn.enflow.dto.request.ChangePasswordRequest;
 import vn.enflow.dto.request.UserCreationRequest;
 import vn.enflow.dto.request.UserUpdateRequest;
+import vn.enflow.dto.respone.UserPublicLookupResponse;
 import vn.enflow.dto.respone.UserResponse;
 import vn.enflow.entity.User;
 
 public interface IUserService {
 
     UserResponse createUser(UserCreationRequest request);
+
+    /**
+     * Tra cứu user theo email (đã chuẩn hóa) để hiển thị tên khi mời vào workspace.
+     * Không tìm thấy hoặc tài khoản vô hiệu → lỗi 404.
+     */
+    UserPublicLookupResponse lookupByEmail(String emailNormalized);
 
     UserResponse updateUser(Long userId, UserUpdateRequest request);
 
