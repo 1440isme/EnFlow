@@ -27,10 +27,11 @@ public class Task {
     @Column(name = "task_code", nullable = true, length = 50)
     String taskCode;
 
-    @Column(name = "title", nullable = false, columnDefinition = "NVARCHAR(255)")
+    @Column(name = "title", nullable = false, length = 255)
     String title;
 
-    @Column(name = "description", columnDefinition = "NVARCHAR(MAX)")
+
+    @Column(name = "description", columnDefinition = "TEXT")
     String description;
 
     @Enumerated(EnumType.STRING)
@@ -50,7 +51,7 @@ public class Task {
     @Column(name = "completed_at")
     LocalDateTime completedAt;
 
-    @Column(name = "resolution", columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "resolution", columnDefinition = "TEXT")
     String resolution;
 
     @Column(name = "time_estimate_days")
@@ -102,17 +103,12 @@ public class Task {
     Status status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_task_id", nullable = false)
+    @JoinColumn(name = "parent_task_id")
     Task parentTask;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporter_id", nullable = false)
     User reporter;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "creator_id", nullable = false)
-    User creator;
-
 
     @JsonIgnore
     @ToString.Exclude
