@@ -40,8 +40,12 @@ public class UserServiceImpl implements IUserService {
             throw new RuntimeException("Email đã tồn tại");
         }
 
+        if (!StringUtils.hasText(request.getPassword())) {
+            throw new RuntimeException("Mật khẩu không được để trống");
+        }
+
         User user = userMapper.toUser(request);
-        user.setPasswordHash(passwordEncoder.encode(request.getPasswordHash()));
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         LocalDateTime now = LocalDateTime.now();
         if (user.getCreatedAt() == null) {
