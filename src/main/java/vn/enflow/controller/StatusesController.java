@@ -1,5 +1,8 @@
 package vn.enflow.controller;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.enflow.dto.request.StatusesCreatetionRequest;
@@ -10,56 +13,43 @@ import vn.enflow.service.IStatusesService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/statuses")
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class StatusesController {
 
-    private final IStatusesService statusesService;
+    IStatusesService statusesService;
 
-    public StatusesController(IStatusesService statusesService) {
-        this.statusesService = statusesService;
+    @PostMapping("/projects/{projectId}/lists/{listId}")
+    ResponseEntity<StatusesRespone> createStatus(@PathVariable Long projectId,
+            @PathVariable Long listId,
+            @RequestBody StatusesCreatetionRequest request) {
+        return ResponseEntity.status(201).body(statusesService.createtionStatus(projectId, listId, request));
     }
 
-    @PostMapping(path = "/projects/{projectId}/lists/{listId}/statuses", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<StatusesRespone> createStatus(@PathVariable("projectId") Long projectId,
-                                                        @PathVariable("listId") Long listId,
-                                                        @RequestBody StatusesCreatetionRequest request) {
-        StatusesRespone created = statusesService.createtionStatus(projectId, listId, request);
-        return ResponseEntity.status(201).body(created);
+    @GetMapping("/{statusId}")
+    ResponseEntity<StatusesRespone> getStatusById(@PathVariable Long statusId) {
+        return ResponseEntity.ok(statusesService.getStatusById(statusId));
     }
 
-    @GetMapping(path = "/statuses/{statusId}", produces = "application/json")
-    public ResponseEntity<StatusesRespone> getStatusById(@PathVariable("statusId") Long statusId) {
-        StatusesRespone resp = statusesService.getStatusById(statusId);
-        if (resp == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(resp);
+    @GetMapping("/projects/{projectId}")
+    ResponseEntity<List<StatusesRespone>> getStatusesByProject(@PathVariable Long projectId) {
+        return ResponseEntity.ok(statusesService.getStatusesByProjectId(projectId));
     }
 
-    @GetMapping(path = "/projects/{projectId}/statuses", produces = "application/json")
-    public ResponseEntity<List<StatusesRespone>> getStatusesByProject(@PathVariable("projectId") Long projectId) {
-        List<StatusesRespone> list = statusesService.getStatusesByProjectId(projectId);
-        return ResponseEntity.ok(list);
+    @GetMapping("/lists/{listId}")
+    ResponseEntity<List<StatusesRespone>> getStatusesByList(@PathVariable Long listId) {
+        return ResponseEntity.ok(statusesService.getStatusesByListId(listId));
     }
 
-    @GetMapping(path = "/lists/{listId}/statuses", produces = "application/json")
-    public ResponseEntity<List<StatusesRespone>> getStatusesByList(@PathVariable("listId") Long listId) {
-        List<StatusesRespone> list = statusesService.getStatusesByListId(listId);
-        return ResponseEntity.ok(list);
+    @PutMapping("/{statusId}")
+    ResponseEntity<StatusesRespone> updateStatus(@PathVariable Long statusId,
+            @RequestBody StatusesUpdateRequest request) {
+        return ResponseEntity.ok(statusesService.updateStatus(statusId, request));
     }
 
-    @PutMapping(path = "/statuses/{statusId}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<StatusesRespone> updateStatus(@PathVariable("statusId") Long statusId,
-                                                         @RequestBody StatusesUpdateRequest request) {
-        StatusesRespone updated = statusesService.updateStatus(statusId, request);
-        if (updated == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(updated);
-    }
-
-    @DeleteMapping(path = "/statuses/{statusId}")
-    public ResponseEntity<Void> deleteStatus(@PathVariable("statusId") Long statusId) {
+    @DeleteMapping("/{statusId}")
+    ResponseEntity<Void> deleteStatus(@PathVariable Long statusId) {
         statusesService.deleteStatus(statusId);
         return ResponseEntity.noContent().build();
     }

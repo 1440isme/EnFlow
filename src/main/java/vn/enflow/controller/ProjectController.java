@@ -1,5 +1,8 @@
 package vn.enflow.controller;
 
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.enflow.dto.request.ProjectCreatetionRequest;
@@ -9,49 +12,37 @@ import vn.enflow.service.IProjectService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/projects")
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ProjectController {
 
-    private final IProjectService projectService;
+    IProjectService projectService;
 
-    public ProjectController(IProjectService projectService) {
-        this.projectService = projectService;
+    @PostMapping("/workspaces/{workspaceId}")
+    ResponseEntity<ProjectResponse> createProject(@PathVariable Long workspaceId,
+            @RequestBody ProjectCreatetionRequest request) {
+        return ResponseEntity.status(201).body(projectService.createtionProject(workspaceId, request));
     }
 
-    @PostMapping(path = "/workspaces/{workspaceId}/projects", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<ProjectResponse> createProject(@PathVariable("workspaceId") Long workspaceId,
-                                                         @RequestBody ProjectCreatetionRequest request) {
-        ProjectResponse created = projectService.createtionProject(workspaceId, request);
-        return ResponseEntity.status(201).body(created);
+    @GetMapping("/{projectId}")
+    ResponseEntity<ProjectResponse> getProjectById(@PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.getProjectById(projectId));
     }
 
-    @GetMapping(path = "/projects/{projectId}", produces = "application/json")
-    public ResponseEntity<ProjectResponse> getProjectById(@PathVariable("projectId") Long projectId) {
-        ProjectResponse resp = projectService.getProjectById(projectId);
-        if (resp == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(resp);
+    @GetMapping("/workspaces/{workspaceId}")
+    ResponseEntity<List<ProjectResponse>> getProjectsByWorkspace(@PathVariable Long workspaceId) {
+        return ResponseEntity.ok(projectService.getProjectsByWorkspaceId(workspaceId));
     }
 
-    @GetMapping(path = "/workspaces/{workspaceId}/projects", produces = "application/json")
-    public ResponseEntity<List<ProjectResponse>> getProjectsByWorkspace(@PathVariable("workspaceId") Long workspaceId) {
-        List<ProjectResponse> list = projectService.getProjectsByWorkspaceId(workspaceId);
-        return ResponseEntity.ok(list);
+    @PutMapping("/{projectId}")
+    ResponseEntity<ProjectResponse> updateProject(@PathVariable Long projectId,
+            @RequestBody ProjectCreatetionRequest request) {
+        return ResponseEntity.ok(projectService.updateProject(projectId, request));
     }
 
-    @PutMapping(path = "/projects/{projectId}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<ProjectResponse> updateProject(@PathVariable("projectId") Long projectId,
-                                                         @RequestBody ProjectCreatetionRequest request) {
-        ProjectResponse updated = projectService.updateProject(projectId, request);
-        if (updated == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(updated);
-    }
-
-    @DeleteMapping(path = "/projects/{projectId}")
-    public ResponseEntity<Void> deleteProject(@PathVariable("projectId") Long projectId) {
+    @DeleteMapping("/{projectId}")
+    ResponseEntity<Void> deleteProject(@PathVariable Long projectId) {
         projectService.deleteProject(projectId);
         return ResponseEntity.noContent().build();
     }
