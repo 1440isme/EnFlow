@@ -16,6 +16,7 @@ public interface UserMapper {
     // Bỏ qua: userId (auto-gen), updatedAt (chưa có khi tạo), các collection
     // relationship
     @Mapping(target = "userId", ignore = true)
+    @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "ownedWorkspaces", ignore = true)
     @Mapping(target = "workspaceMemberships", ignore = true)

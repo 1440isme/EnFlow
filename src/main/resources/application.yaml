@@ -2,6 +2,12 @@ server:
   port: 8080
   servlet:
     context-path: /enflow
+enflow:
+  jwt:
+    # Tối thiểu 256 bit cho HS256 — đổi giá trị này trên môi trường thật (biến môi trường / vault)
+    secret: "7f3e9c2a1b8d4e6f0a5c9b2d8e1f4a7c3b6d9e2f5a8c1b4d7e0f3a6c9b2d5e8f1"
+    expiration-ms: 86400000
+
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/EnFlow

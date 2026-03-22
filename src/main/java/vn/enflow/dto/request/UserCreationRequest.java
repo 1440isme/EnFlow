@@ -1,5 +1,6 @@
 package vn.enflow.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,7 +15,10 @@ import java.time.LocalDateTime;
 
 public class UserCreationRequest {
     private String username;
-    private String passwordHash;
+
+    /** Mật khẩu dạng plain text; client có thể gửi thêm field cũ `passwordHash` (alias). */
+    @JsonAlias("passwordHash")
+    private String password;
     private String email;
     private String fullName;
     private String avatarUrl;
