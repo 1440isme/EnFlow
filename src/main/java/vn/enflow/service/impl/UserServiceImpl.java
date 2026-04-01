@@ -11,6 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 import jakarta.transaction.Transactional;
 
 import vn.enflow.dto.request.ChangePasswordRequest;
+import vn.enflow.dto.request.UpdateMyProfileRequest;
 import vn.enflow.dto.request.UserCreationRequest;
 import vn.enflow.dto.request.UserUpdateRequest;
 import vn.enflow.dto.respone.UserPublicLookupResponse;
@@ -59,6 +60,18 @@ public class UserServiceImpl implements IUserService {
         if (user.getIsActive() == null) {
             user.setIsActive(true);
         }
+
+        return userMapper.toUserResponse(userRepository.save(user));
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateMyProfile(Long userId, UpdateMyProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user"));
+
+        userMapper.updateMyProfile(user, request);
+        user.setUpdatedAt(LocalDateTime.now());
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
