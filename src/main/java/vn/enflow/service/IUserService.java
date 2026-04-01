@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import vn.enflow.dto.request.ChangePasswordRequest;
+import vn.enflow.dto.request.UpdateMyProfileRequest;
 import vn.enflow.dto.request.UserCreationRequest;
 import vn.enflow.dto.request.UserUpdateRequest;
 import vn.enflow.dto.respone.UserPublicLookupResponse;
@@ -19,6 +20,8 @@ public interface IUserService {
      * Không tìm thấy hoặc tài khoản vô hiệu → lỗi 404.
      */
     UserPublicLookupResponse lookupByEmail(String emailNormalized);
+
+    UserResponse updateMyProfile(Long userId, UpdateMyProfileRequest request);
 
     UserResponse updateUser(Long userId, UserUpdateRequest request);
 

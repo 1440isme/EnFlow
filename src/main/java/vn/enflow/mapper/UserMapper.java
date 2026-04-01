@@ -4,6 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
+import vn.enflow.dto.request.UpdateMyProfileRequest;
 import vn.enflow.dto.request.UserCreationRequest;
 import vn.enflow.dto.request.UserUpdateRequest;
 import vn.enflow.dto.respone.UserResponse;
@@ -37,4 +38,16 @@ public interface UserMapper {
     @Mapping(target = "ownedWorkspaces", ignore = true)
     @Mapping(target = "workspaceMemberships", ignore = true)
     void updateUser(@MappingTarget User user, UserUpdateRequest request);
+
+    // UpdateMyProfileRequest → User (chỉ cho phép cập nhật hồ sơ cá nhân)
+    @Mapping(target = "userId", ignore = true)
+    @Mapping(target = "username", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "ownedWorkspaces", ignore = true)
+    @Mapping(target = "workspaceMemberships", ignore = true)
+    void updateMyProfile(@MappingTarget User user, UpdateMyProfileRequest request);
 }

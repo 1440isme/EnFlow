@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import vn.enflow.dto.request.ChangePasswordRequest;
+import vn.enflow.dto.request.UpdateMyProfileRequest;
 import vn.enflow.dto.request.UserCreationRequest;
 import vn.enflow.dto.request.UserUpdateRequest;
 import vn.enflow.dto.respone.UserPublicLookupResponse;
@@ -37,8 +38,8 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    ResponseEntity<UserResponse> updateCurrentProfile(@RequestBody UserUpdateRequest request) {
-        return ResponseEntity.ok(userService.updateUser(SecurityUtils.currentUserId(), request));
+    ResponseEntity<UserResponse> updateCurrentProfile(@RequestBody UpdateMyProfileRequest request) {
+        return ResponseEntity.ok(userService.updateMyProfile(SecurityUtils.currentUserId(), request));
     }
 
     @PatchMapping("/me/change-password")
