@@ -10,9 +10,11 @@ import vn.enflow.dto.request.ProjectListUpdateRequest;
 import vn.enflow.dto.respone.ProjectListResponse;
 import vn.enflow.entity.Project;
 import vn.enflow.entity.ProjectList;
+import vn.enflow.entity.Status;
 import vn.enflow.mapper.ProjectListMapper;
 import vn.enflow.repository.ProjectListRepository;
 import vn.enflow.repository.ProjectRepository;
+import vn.enflow.repository.StatusRepository;
 import vn.enflow.service.IProjectListService;
 
 import java.time.LocalDateTime;
@@ -26,6 +28,7 @@ public class ProjectListServiceImpl implements IProjectListService {
     ProjectListRepository projectListRepository;
     ProjectRepository projectRepository;
     ProjectListMapper projectListMapper;
+    StatusRepository statusRepository;
 
     @Override
     @Transactional
@@ -45,6 +48,37 @@ public class ProjectListServiceImpl implements IProjectListService {
         if (projectList.getArchived() == null) projectList.setArchived(false);
 
         ProjectList saved = projectListRepository.save(projectList);
+
+        // Tạo 3 Status mặc định: To do, In-progress, Completed
+        Status toDo = Status.builder()
+                .name("To do")
+                .statusGroup(Status.StatusGroup.TO_DO)
+                .color(null)
+                .isDefault(true)
+                .project(saved.getProject())
+                .list(saved)
+                .build();
+
+        Status inProgress = Status.builder()
+                .name("In-progress")
+                .statusGroup(Status.StatusGroup.IN_PROGRESS)
+                .color(null)
+                .isDefault(true)
+                .project(saved.getProject())
+                .list(saved)
+                .build();
+
+        Status completed = Status.builder()
+                .name("Completed")
+                .statusGroup(Status.StatusGroup.COMPLETED)
+                .color(null)
+                .isDefault(true)
+                .project(saved.getProject())
+                .list(saved)
+                .build();
+
+        statusRepository.saveAll(List.of(toDo, inProgress, completed));
+
         return projectListMapper.toProjectListResponse(saved);
     }
 

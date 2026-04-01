@@ -7,13 +7,13 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
+@Entity
+@Table(name = "statuses")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Entity
-@Table(name = "statuses")
 public class Status {
 
     @Id
@@ -25,25 +25,68 @@ public class Status {
     String name;
 
     @Column(name = "status_group", nullable = false)
-    @Enumerated(EnumType.STRING)
     StatusGroup statusGroup;
 
     @Column(name = "color", length = 20)
     String color;
 
-    @Column(name = "position", nullable = false)
-    Integer position = 0;
-
     @Column(name = "is_default", nullable = false)
     Boolean isDefault = false;
 
-    // ── Enums ────────────────────────────────────────────────────────────────
+    // ── Enum có thứ tự cố định ───────────────────────────────────────────────
 
     public enum StatusGroup {
-        idea, backlog, to_do, in_progress, review, testing, deploy, completed
+        IDEA(1),
+        BACKLOG(2),
+        TO_DO(3),
+        IN_PROGRESS(4),
+        REVIEW(5),
+        TESTING(6),
+        DEPLOY(7),
+        COMPLETED(8);
+
+        private final int order;
+
+        StatusGroup(int order) {
+            this.order = order;
+        }
+
+        public int getOrder() {
+            return order;
+        }
+
+        public static StatusGroup fromString(String value) {
+            if (value == null) return null;
+            // Handle lowercase, spaces, dashes and 'todo' vs 'to_do'
+            String normalized = value.trim().toUpperCase()
+                    .replace("-", "_")
+                    .replace(" ", "_");
+
+            if (normalized.equals("TODO")) return TO_DO;
+
+            try {
+                return StatusGroup.valueOf(normalized);
+            } catch (IllegalArgumentException e) {
+                // Return a default or handle errors
+                return null;
+            }
+        }
     }
 
-    // ── Relationships với entity đã tồn tại ──────────────────────────────────
+    @Converter(autoApply = true)
+    public static class StatusGroupConverter implements AttributeConverter<StatusGroup, String> {
+        @Override
+        public String convertToDatabaseColumn(StatusGroup attribute) {
+            return attribute == null ? null : attribute.name();
+        }
+
+        @Override
+        public StatusGroup convertToEntityAttribute(String dbData) {
+            return StatusGroup.fromString(dbData);
+        }
+    }
+
+    // ── Relationships ────────────────────────────────────────────────────────
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
@@ -53,9 +96,6 @@ public class Status {
     @JoinColumn(name = "list_id", nullable = false)
     ProjectList list;
 
-    // ── Relationships với entity chưa tồn tại (mở comment khi tạo entity) ───
-
-    // tasks.status_id → statuses.status_id
     @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

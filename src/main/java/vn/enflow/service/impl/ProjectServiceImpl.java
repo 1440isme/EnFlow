@@ -10,10 +10,14 @@ import vn.enflow.dto.respone.ProjectResponse;
 import vn.enflow.entity.Project;
 import vn.enflow.entity.User;
 import vn.enflow.entity.Workspace;
+import vn.enflow.entity.ProjectList;
+import vn.enflow.entity.Status;
 import vn.enflow.mapper.ProjectMapper;
 import vn.enflow.repository.ProjectRepository;
 import vn.enflow.repository.UserRepository;
 import vn.enflow.repository.WorkspaceRepository;
+import vn.enflow.repository.ProjectListRepository;
+import vn.enflow.repository.StatusRepository;
 import vn.enflow.service.IProjectService;
 
 import java.time.LocalDateTime;
@@ -28,6 +32,8 @@ public class ProjectServiceImpl implements IProjectService {
     WorkspaceRepository workspaceRepository;
     UserRepository userRepository;
     ProjectMapper projectMapper;
+    ProjectListRepository projectListRepository;
+    StatusRepository statusRepository;
 
     @Override
     @Transactional
@@ -54,6 +60,51 @@ public class ProjectServiceImpl implements IProjectService {
         if (project.getArchived() == null) project.setArchived(false);
 
         Project saved = projectRepository.save(project);
+
+        // Tạo mặc định 1 ProjectList tên "List" cho project vừa tạo
+        ProjectList defaultList = ProjectList.builder()
+                .name("List")
+                .description(null)
+                .position(0)
+                .isPrivate(false)
+                .archived(false)
+                .createdAt(now)
+                .updatedAt(now)
+                .project(saved)
+                .build();
+
+        ProjectList savedList = projectListRepository.save(defaultList);
+
+        // Tạo 3 Status mặc định cho list: To do, In-progress, Completed
+        Status toDo = Status.builder()
+                .name("To do")
+                .statusGroup(Status.StatusGroup.TO_DO)
+                .color(null)
+                .isDefault(true)
+                .project(saved)
+                .list(savedList)
+                .build();
+
+        Status inProgress = Status.builder()
+                .name("In-progress")
+                .statusGroup(Status.StatusGroup.IN_PROGRESS)
+                .color(null)
+                .isDefault(true)
+                .project(saved)
+                .list(savedList)
+                .build();
+
+        Status completed = Status.builder()
+                .name("Completed")
+                .statusGroup(Status.StatusGroup.COMPLETED)
+                .color(null)
+                .isDefault(true)
+                .project(saved)
+                .list(savedList)
+                .build();
+
+        statusRepository.saveAll(List.of(toDo, inProgress, completed));
+
         return projectMapper.toProjectResponse(saved);
     }
 
