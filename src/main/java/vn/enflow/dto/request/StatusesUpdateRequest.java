@@ -9,7 +9,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 
 public class StatusesUpdateRequest {
-    String name;
     String statusGroup;
     String color;
     Integer position;

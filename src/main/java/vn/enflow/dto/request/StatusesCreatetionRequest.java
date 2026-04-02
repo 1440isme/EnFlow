@@ -10,7 +10,6 @@ import lombok.experimental.FieldDefaults;
 public class StatusesCreatetionRequest {
     Long idProject;
     Long idListProject;
-    String name;
     String color;
     String statusGroup;
     String position;
