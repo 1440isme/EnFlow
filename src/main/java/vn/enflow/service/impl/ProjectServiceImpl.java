@@ -14,7 +14,6 @@ import vn.enflow.entity.ProjectList;
 import vn.enflow.entity.Status;
 import vn.enflow.mapper.ProjectMapper;
 import vn.enflow.repository.ProjectRepository;
-import vn.enflow.repository.UserRepository;
 import vn.enflow.repository.WorkspaceRepository;
 import vn.enflow.repository.ProjectListRepository;
 import vn.enflow.repository.StatusRepository;
@@ -30,7 +29,6 @@ public class ProjectServiceImpl implements IProjectService {
 
     ProjectRepository projectRepository;
     WorkspaceRepository workspaceRepository;
-    UserRepository userRepository;
     ProjectMapper projectMapper;
     ProjectListRepository projectListRepository;
     StatusRepository statusRepository;
@@ -77,7 +75,6 @@ public class ProjectServiceImpl implements IProjectService {
 
         // Tạo 3 Status mặc định cho list: To do, In-progress, Completed
         Status toDo = Status.builder()
-                .name("To do")
                 .statusGroup(Status.StatusGroup.TO_DO)
                 .color(null)
                 .isDefault(true)
@@ -86,7 +83,6 @@ public class ProjectServiceImpl implements IProjectService {
                 .build();
 
         Status inProgress = Status.builder()
-                .name("In-progress")
                 .statusGroup(Status.StatusGroup.IN_PROGRESS)
                 .color(null)
                 .isDefault(true)
@@ -95,7 +91,6 @@ public class ProjectServiceImpl implements IProjectService {
                 .build();
 
         Status completed = Status.builder()
-                .name("Completed")
                 .statusGroup(Status.StatusGroup.COMPLETED)
                 .color(null)
                 .isDefault(true)

@@ -51,7 +51,6 @@ public class ProjectListServiceImpl implements IProjectListService {
 
         // Tạo 3 Status mặc định: To do, In-progress, Completed
         Status toDo = Status.builder()
-                .name("To do")
                 .statusGroup(Status.StatusGroup.TO_DO)
                 .color(null)
                 .isDefault(true)
@@ -60,7 +59,6 @@ public class ProjectListServiceImpl implements IProjectListService {
                 .build();
 
         Status inProgress = Status.builder()
-                .name("In-progress")
                 .statusGroup(Status.StatusGroup.IN_PROGRESS)
                 .color(null)
                 .isDefault(true)
@@ -69,7 +67,6 @@ public class ProjectListServiceImpl implements IProjectListService {
                 .build();
 
         Status completed = Status.builder()
-                .name("Completed")
                 .statusGroup(Status.StatusGroup.COMPLETED)
                 .color(null)
                 .isDefault(true)

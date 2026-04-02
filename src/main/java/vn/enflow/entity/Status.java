@@ -21,9 +21,6 @@ public class Status {
     @Column(name = "status_id")
     Long statusId;
 
-    @Column(name = "name", nullable = false, length = 100)
-    String name;
-
     @Column(name = "status_group", nullable = false)
     StatusGroup statusGroup;
 
@@ -36,42 +33,48 @@ public class Status {
     // ── Enum có thứ tự cố định ───────────────────────────────────────────────
 
     public enum StatusGroup {
-        IDEA(1),
-        BACKLOG(2),
-        TO_DO(3),
-        IN_PROGRESS(4),
-        REVIEW(5),
-        TESTING(6),
-        DEPLOY(7),
-        COMPLETED(8);
+        IDEA(1, "IDEA"),
+        BACKLOG(2, "BACKLOG"),
+        TO_DO(3, "TO DO"),
+        IN_PROGRESS(4, "IN PROGRESS"),
+        REVIEW(5, "REVIEW"),
+        TESTING(6, "TESTING"),
+        DEPLOY(7, "DEPLOY"),
+        COMPLETED(8, "COMPLETED");
 
         private final int order;
+        private final String displayName;
 
-        StatusGroup(int order) {
+        StatusGroup(int order, String displayName) {
             this.order = order;
+            this.displayName = displayName;
         }
 
         public int getOrder() {
             return order;
         }
 
+        public String getDisplayName() {
+            return displayName;
+        }
+
         public static StatusGroup fromString(String value) {
-            if (value == null) return null;
-            // Handle lowercase, spaces, dashes and 'todo' vs 'to_do'
-            String normalized = value.trim().toUpperCase()
-                    .replace("-", "_")
-                    .replace(" ", "_");
-
-            if (normalized.equals("TODO")) return TO_DO;
-
-            try {
-                return StatusGroup.valueOf(normalized);
-            } catch (IllegalArgumentException e) {
-                // Return a default or handle errors
+            if (value == null || value.isBlank()) {
                 return null;
             }
+
+            String candidate = value.trim();
+            for (StatusGroup statusGroup : StatusGroup.values()) {
+                if (statusGroup.name().equalsIgnoreCase(candidate)
+                        || statusGroup.displayName.equalsIgnoreCase(candidate)) {
+                    return statusGroup;
+                }
+            }
+
+            return null;
         }
     }
+
 
     @Converter(autoApply = true)
     public static class StatusGroupConverter implements AttributeConverter<StatusGroup, String> {

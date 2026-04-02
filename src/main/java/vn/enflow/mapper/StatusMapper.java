@@ -19,7 +19,7 @@ public interface StatusMapper {
     Status toStatus(StatusesCreatetionRequest request);
 
     // Status → StatusesRespone
-    @Mapping(target = "statusGroup", expression = "java(status.getStatusGroup().name())")
+    @Mapping(target = "statusGroup", expression = "java(status.getStatusGroup().getDisplayName())")
     @Mapping(target = "position", source = "statusGroup.order")
     @Mapping(target = "listId", source = "list.listId")
     @Mapping(target = "projectId", source = "project.projectId")
