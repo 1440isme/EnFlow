@@ -30,7 +30,9 @@ public interface TaskMapper {
     Task toTask(TaskCreatetionRequest request);
 
     @Mapping(target = "projectId", source = "project.projectId")
+    @Mapping(target = "projectName", source = "project.name")
     @Mapping(target = "listId", source = "list.listId")
+    @Mapping(target = "listName", source = "list.name")
     @Mapping(target = "statusId", source = "status.statusId")
     @Mapping(target = "parentTaskId", source = "parentTask.taskId")
     @Mapping(target = "reporterId", source = "reporter.userId")
