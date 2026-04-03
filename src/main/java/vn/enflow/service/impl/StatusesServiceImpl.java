@@ -47,8 +47,8 @@ public class StatusesServiceImpl implements IStatusesService {
         status.setProject(project);
         status.setList(list);
 
-        if (status.getIsDefault() == null) status.setIsDefault(false);
-        if (status.getPosition() == null) status.setPosition(0);
+        if (status.getIsDefault() == null)
+            status.setIsDefault(false);
 
         Status saved = statusRepository.save(status);
         return statusMapper.toStatusesRespone(saved);
@@ -68,6 +68,7 @@ public class StatusesServiceImpl implements IStatusesService {
         }
         return statusRepository.findByProject_ProjectId(projectId).stream()
                 .map(statusMapper::toStatusesRespone)
+                .sorted((s1, s2) -> s1.getPosition().compareTo(s2.getPosition()))
                 .toList();
     }
 
@@ -78,6 +79,7 @@ public class StatusesServiceImpl implements IStatusesService {
         }
         return statusRepository.findByList_ListId(listId).stream()
                 .map(statusMapper::toStatusesRespone)
+                .sorted((s1, s2) -> s1.getPosition().compareTo(s2.getPosition()))
                 .toList();
     }
 

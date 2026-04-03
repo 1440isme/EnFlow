@@ -10,7 +10,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class StatusesRespone {
     Long statusId;
-    String name;
     String statusGroup;
     String color;
     Integer position;

@@ -7,13 +7,13 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
+@Entity
+@Table(name = "statuses")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Entity
-@Table(name = "statuses")
 public class Status {
 
     @Id
@@ -21,29 +21,75 @@ public class Status {
     @Column(name = "status_id")
     Long statusId;
 
-    @Column(name = "name", nullable = false, length = 100)
-    String name;
-
     @Column(name = "status_group", nullable = false)
-    @Enumerated(EnumType.STRING)
     StatusGroup statusGroup;
 
     @Column(name = "color", length = 20)
     String color;
 
-    @Column(name = "position", nullable = false)
-    Integer position = 0;
-
     @Column(name = "is_default", nullable = false)
     Boolean isDefault = false;
 
-    // ── Enums ────────────────────────────────────────────────────────────────
+    // ── Enum có thứ tự cố định ───────────────────────────────────────────────
 
     public enum StatusGroup {
-        idea, backlog, to_do, in_progress, review, testing, deploy, completed
+        IDEA(1, "IDEA"),
+        BACKLOG(2, "BACKLOG"),
+        TO_DO(3, "TO DO"),
+        IN_PROGRESS(4, "IN PROGRESS"),
+        REVIEW(5, "REVIEW"),
+        TESTING(6, "TESTING"),
+        DEPLOY(7, "DEPLOY"),
+        COMPLETED(8, "COMPLETED");
+
+        private final int order;
+        private final String displayName;
+
+        StatusGroup(int order, String displayName) {
+            this.order = order;
+            this.displayName = displayName;
+        }
+
+        public int getOrder() {
+            return order;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public static StatusGroup fromString(String value) {
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+
+            String candidate = value.trim();
+            for (StatusGroup statusGroup : StatusGroup.values()) {
+                if (statusGroup.name().equalsIgnoreCase(candidate)
+                        || statusGroup.displayName.equalsIgnoreCase(candidate)) {
+                    return statusGroup;
+                }
+            }
+
+            return null;
+        }
     }
 
-    // ── Relationships với entity đã tồn tại ──────────────────────────────────
+
+    @Converter(autoApply = true)
+    public static class StatusGroupConverter implements AttributeConverter<StatusGroup, String> {
+        @Override
+        public String convertToDatabaseColumn(StatusGroup attribute) {
+            return attribute == null ? null : attribute.name();
+        }
+
+        @Override
+        public StatusGroup convertToEntityAttribute(String dbData) {
+            return StatusGroup.fromString(dbData);
+        }
+    }
+
+    // ── Relationships ────────────────────────────────────────────────────────
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
@@ -53,9 +99,6 @@ public class Status {
     @JoinColumn(name = "list_id", nullable = false)
     ProjectList list;
 
-    // ── Relationships với entity chưa tồn tại (mở comment khi tạo entity) ───
-
-    // tasks.status_id → statuses.status_id
     @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
