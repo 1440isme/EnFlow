@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import vn.enflow.dto.request.ProjectCreatetionRequest;
+import vn.enflow.dto.respone.ProjectListStatusesResponse;
 import vn.enflow.dto.respone.ProjectResponse;
 import vn.enflow.service.IProjectService;
 
@@ -28,6 +29,11 @@ public class ProjectController {
     @GetMapping("/{projectId}")
     ResponseEntity<ProjectResponse> getProjectById(@PathVariable Long projectId) {
         return ResponseEntity.ok(projectService.getProjectById(projectId));
+    }
+
+    @GetMapping("/{projectId}/list-statuses")
+    ResponseEntity<ProjectListStatusesResponse> getProjectListStatuses(@PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.getProjectListStatuses(projectId));
     }
 
     @GetMapping("/workspaces/{workspaceId}")

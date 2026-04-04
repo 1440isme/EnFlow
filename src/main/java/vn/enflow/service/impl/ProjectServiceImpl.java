@@ -6,13 +6,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 import vn.enflow.dto.request.ProjectCreatetionRequest;
+import vn.enflow.dto.respone.ProjectListResponse;
+import vn.enflow.dto.respone.ProjectListStatusesResponse;
+import vn.enflow.dto.respone.ProjectListWithStatusesResponse;
 import vn.enflow.dto.respone.ProjectResponse;
+import vn.enflow.dto.respone.StatusesRespone;
 import vn.enflow.entity.Project;
 import vn.enflow.entity.User;
 import vn.enflow.entity.Workspace;
 import vn.enflow.entity.ProjectList;
 import vn.enflow.entity.Status;
+import vn.enflow.mapper.ProjectListMapper;
 import vn.enflow.mapper.ProjectMapper;
+import vn.enflow.mapper.StatusMapper;
 import vn.enflow.repository.ProjectRepository;
 import vn.enflow.repository.WorkspaceRepository;
 import vn.enflow.repository.ProjectListRepository;
@@ -20,7 +26,11 @@ import vn.enflow.repository.StatusRepository;
 import vn.enflow.service.IProjectService;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +40,8 @@ public class ProjectServiceImpl implements IProjectService {
     ProjectRepository projectRepository;
     WorkspaceRepository workspaceRepository;
     ProjectMapper projectMapper;
+    ProjectListMapper projectListMapper;
+    StatusMapper statusMapper;
     ProjectListRepository projectListRepository;
     StatusRepository statusRepository;
 
@@ -108,6 +120,53 @@ public class ProjectServiceImpl implements IProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
         return projectMapper.toProjectResponse(project);
+    }
+
+    @Override
+    public ProjectListStatusesResponse getProjectListStatuses(Long projectId) {
+        if (!projectRepository.existsById(projectId)) {
+            throw new RuntimeException("Không tìm thấy project với id: " + projectId);
+        }
+
+        List<ProjectList> listEntities = projectListRepository.findByProject_ProjectId(projectId);
+        listEntities.sort(Comparator
+                .comparing(ProjectList::getPosition, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(ProjectList::getListId));
+
+        List<Status> statusEntities = statusRepository.findByProject_ProjectId(projectId);
+        Map<Long, List<StatusesRespone>> statusesByListId = new HashMap<>();
+        statusEntities.forEach((status) -> {
+            Long listId = status.getList() != null ? status.getList().getListId() : null;
+            if (listId == null) return;
+            statusesByListId
+                    .computeIfAbsent(listId, ignored -> new ArrayList<>())
+                    .add(statusMapper.toStatusesRespone(status));
+        });
+        statusesByListId.values().forEach((items) ->
+                items.sort(Comparator
+                        .comparing(StatusesRespone::getPosition, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(StatusesRespone::getStatusId)));
+
+        List<ProjectListWithStatusesResponse> lists = listEntities.stream().map((listEntity) -> {
+            ProjectListResponse base = projectListMapper.toProjectListResponse(listEntity);
+            return ProjectListWithStatusesResponse.builder()
+                    .listProjectId(base.getListProjectId())
+                    .name(base.getName())
+                    .description(base.getDescription())
+                    .position(base.getPosition())
+                    .isPrivate(base.getIsPrivate())
+                    .archived(base.getArchived())
+                    .createdAt(base.getCreatedAt())
+                    .updatedAt(base.getUpdatedAt())
+                    .projectId(base.getProjectId())
+                    .statuses(statusesByListId.getOrDefault(base.getListProjectId(), List.of()))
+                    .build();
+        }).toList();
+
+        return ProjectListStatusesResponse.builder()
+                .projectId(projectId)
+                .lists(lists)
+                .build();
     }
 
     @Override
