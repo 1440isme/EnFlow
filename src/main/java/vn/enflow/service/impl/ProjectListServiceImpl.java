@@ -49,10 +49,9 @@ public class ProjectListServiceImpl implements IProjectListService {
 
         ProjectList saved = projectListRepository.save(projectList);
 
-        // Tạo 3 Status mặc định: To do, In-progress, Completed
         Status toDo = Status.builder()
                 .statusGroup(Status.StatusGroup.TO_DO)
-                .color(null)
+                .color("#9CA3AF")
                 .isDefault(true)
                 .project(saved.getProject())
                 .list(saved)
@@ -60,7 +59,7 @@ public class ProjectListServiceImpl implements IProjectListService {
 
         Status inProgress = Status.builder()
                 .statusGroup(Status.StatusGroup.IN_PROGRESS)
-                .color(null)
+                .color("#3B82F6")
                 .isDefault(true)
                 .project(saved.getProject())
                 .list(saved)
@@ -68,7 +67,7 @@ public class ProjectListServiceImpl implements IProjectListService {
 
         Status completed = Status.builder()
                 .statusGroup(Status.StatusGroup.COMPLETED)
-                .color(null)
+                .color("#10B981")
                 .isDefault(true)
                 .project(saved.getProject())
                 .list(saved)
