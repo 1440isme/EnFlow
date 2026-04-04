@@ -13,7 +13,9 @@ import java.time.LocalDateTime;
 public class TaskResponse {
     Long taskId;
     Long projectId;
+    String projectName;
     Long listId;
+    String listName;
     Long statusId;
     Long parentTaskId;
     Long reporterId;
