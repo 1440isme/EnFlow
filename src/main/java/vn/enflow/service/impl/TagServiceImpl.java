@@ -14,6 +14,7 @@ import vn.enflow.mapper.TagMapper;
 import vn.enflow.repository.TagRepository;
 import vn.enflow.repository.WorkspaceRepository;
 import vn.enflow.service.ITagService;
+import vn.enflow.service.WorkspaceAccessService;
 
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class TagServiceImpl implements ITagService {
 
     TagRepository tagRepository;
     WorkspaceRepository workspaceRepository;
+    WorkspaceAccessService workspaceAccessService;
     TagMapper tagMapper;
 
     @Override
@@ -31,6 +33,7 @@ public class TagServiceImpl implements ITagService {
     public TagResponse createtionTag(Long workspaceId, TagCreatetionRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy workspace với id: " + workspaceId));
+        workspaceAccessService.requireCurrentUserActiveMember(workspaceId);
 
         Tag tag = tagMapper.toTag(request);
         tag.setWorkspace(workspace);
@@ -41,6 +44,9 @@ public class TagServiceImpl implements ITagService {
 
     @Override
     public TagResponse getTagById(Long tagId) {
+        Long wsId = tagRepository.findWorkspaceIdByTagId(tagId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + tagId));
+        workspaceAccessService.requireCurrentUserActiveMember(wsId);
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + tagId));
         return tagMapper.toTagResponse(tag);
@@ -51,6 +57,7 @@ public class TagServiceImpl implements ITagService {
         if (!workspaceRepository.existsById(workspaceId)) {
             throw new RuntimeException("Không tìm thấy workspace với id: " + workspaceId);
         }
+        workspaceAccessService.requireCurrentUserActiveMember(workspaceId);
 
         return tagRepository.findByWorkspace_WorkspaceId(workspaceId).stream()
                 .map(tagMapper::toTagResponse)
@@ -62,6 +69,7 @@ public class TagServiceImpl implements ITagService {
     public TagResponse updateTag(Long tagId, TagUpdateRequest request) {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + tagId));
+        workspaceAccessService.requireCurrentUserActiveMember(tag.getWorkspace().getWorkspaceId());
 
         tagMapper.updateTag(tag, request);
         return tagMapper.toTagResponse(tagRepository.save(tag));
@@ -70,9 +78,9 @@ public class TagServiceImpl implements ITagService {
     @Override
     @Transactional
     public void deleteTag(Long tagId) {
-        if (!tagRepository.existsById(tagId)) {
-            throw new RuntimeException("Không tìm thấy tag với id: " + tagId);
-        }
+        Tag tag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + tagId));
+        workspaceAccessService.requireCurrentUserActiveMember(tag.getWorkspace().getWorkspaceId());
         tagRepository.deleteById(tagId);
     }
 }

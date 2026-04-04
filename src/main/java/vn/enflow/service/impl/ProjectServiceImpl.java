@@ -21,6 +21,7 @@ import vn.enflow.mapper.ProjectMapper;
 import vn.enflow.mapper.StatusMapper;
 import vn.enflow.repository.ProjectRepository;
 import vn.enflow.repository.WorkspaceRepository;
+import vn.enflow.service.WorkspaceAccessService;
 import vn.enflow.repository.ProjectListRepository;
 import vn.enflow.repository.StatusRepository;
 import vn.enflow.service.IProjectService;
@@ -39,6 +40,7 @@ public class ProjectServiceImpl implements IProjectService {
 
     ProjectRepository projectRepository;
     WorkspaceRepository workspaceRepository;
+    WorkspaceAccessService workspaceAccessService;
     ProjectMapper projectMapper;
     ProjectListMapper projectListMapper;
     StatusMapper statusMapper;
@@ -50,12 +52,14 @@ public class ProjectServiceImpl implements IProjectService {
     public ProjectResponse createtionProject(Long workspaceId, ProjectCreatetionRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy workspace với id: " + workspaceId));
+        workspaceAccessService.requireCurrentUserActiveMember(workspaceId);
 
         if (request.getProjectKey() != null && projectRepository.existsByProjectKey(request.getProjectKey())) {
             throw new RuntimeException("Project key đã tồn tại: " + request.getProjectKey());
         }
 
-        // createdBy: lấy owner của workspace làm người tạo (hoặc cung cấp qua request nếu cần)
+        // createdBy: lấy owner của workspace làm người tạo (hoặc cung cấp qua request
+        // nếu cần)
         User createdBy = workspace.getOwner();
 
         Project project = projectMapper.toProject(request);
@@ -66,8 +70,10 @@ public class ProjectServiceImpl implements IProjectService {
         project.setCreatedAt(now);
         project.setUpdatedAt(now);
 
-        if (project.getIsPrivate() == null) project.setIsPrivate(false);
-        if (project.getArchived() == null) project.setArchived(false);
+        if (project.getIsPrivate() == null)
+            project.setIsPrivate(false);
+        if (project.getArchived() == null)
+            project.setArchived(false);
 
         Project saved = projectRepository.save(project);
 
@@ -117,6 +123,9 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Override
     public ProjectResponse getProjectById(Long projectId) {
+        Long wsId = projectRepository.findWorkspaceIdByProjectId(projectId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireCurrentUserActiveMember(wsId);
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
         return projectMapper.toProjectResponse(project);
@@ -124,9 +133,9 @@ public class ProjectServiceImpl implements IProjectService {
 
     @Override
     public ProjectListStatusesResponse getProjectListStatuses(Long projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new RuntimeException("Không tìm thấy project với id: " + projectId);
-        }
+        Long wsId = projectRepository.findWorkspaceIdByProjectId(projectId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireCurrentUserActiveMember(wsId);
 
         List<ProjectList> listEntities = projectListRepository.findByProject_ProjectId(projectId);
         listEntities.sort(Comparator
@@ -137,15 +146,15 @@ public class ProjectServiceImpl implements IProjectService {
         Map<Long, List<StatusesRespone>> statusesByListId = new HashMap<>();
         statusEntities.forEach((status) -> {
             Long listId = status.getList() != null ? status.getList().getListId() : null;
-            if (listId == null) return;
+            if (listId == null)
+                return;
             statusesByListId
                     .computeIfAbsent(listId, ignored -> new ArrayList<>())
                     .add(statusMapper.toStatusesRespone(status));
         });
-        statusesByListId.values().forEach((items) ->
-                items.sort(Comparator
-                        .comparing(StatusesRespone::getPosition, Comparator.nullsLast(Integer::compareTo))
-                        .thenComparing(StatusesRespone::getStatusId)));
+        statusesByListId.values().forEach((items) -> items.sort(Comparator
+                .comparing(StatusesRespone::getPosition, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(StatusesRespone::getStatusId)));
 
         List<ProjectListWithStatusesResponse> lists = listEntities.stream().map((listEntity) -> {
             ProjectListResponse base = projectListMapper.toProjectListResponse(listEntity);
@@ -174,6 +183,7 @@ public class ProjectServiceImpl implements IProjectService {
         if (!workspaceRepository.existsById(workspaceId)) {
             throw new RuntimeException("Không tìm thấy workspace với id: " + workspaceId);
         }
+        workspaceAccessService.requireCurrentUserActiveMember(workspaceId);
         return projectRepository.findByWorkspace_WorkspaceId(workspaceId).stream()
                 .map(projectMapper::toProjectResponse)
                 .toList();
@@ -184,6 +194,7 @@ public class ProjectServiceImpl implements IProjectService {
     public ProjectResponse updateProject(Long projectId, ProjectCreatetionRequest request) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireCurrentUserActiveMember(project.getWorkspace().getWorkspaceId());
 
         projectMapper.updateProject(project, request);
         project.setUpdatedAt(LocalDateTime.now());
@@ -194,9 +205,9 @@ public class ProjectServiceImpl implements IProjectService {
     @Override
     @Transactional
     public void deleteProject(Long projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new RuntimeException("Không tìm thấy project với id: " + projectId);
-        }
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireCurrentUserActiveMember(project.getWorkspace().getWorkspaceId());
         projectRepository.deleteById(projectId);
     }
 }

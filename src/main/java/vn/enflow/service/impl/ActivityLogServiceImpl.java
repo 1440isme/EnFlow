@@ -20,6 +20,7 @@ import vn.enflow.repository.TaskRepository;
 import vn.enflow.repository.UserRepository;
 import vn.enflow.repository.WorkspaceRepository;
 import vn.enflow.service.IActivityLogService;
+import vn.enflow.service.WorkspaceAccessService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +32,7 @@ public class ActivityLogServiceImpl implements IActivityLogService {
 
     ActivityLogRepository activityLogRepository;
     WorkspaceRepository workspaceRepository;
+    WorkspaceAccessService workspaceAccessService;
     ProjectRepository projectRepository;
     TaskRepository taskRepository;
     UserRepository userRepository;
@@ -95,6 +97,7 @@ public class ActivityLogServiceImpl implements IActivityLogService {
         if (!workspaceRepository.existsById(workspaceId)) {
             throw new RuntimeException("Không tìm thấy workspace với id: " + workspaceId);
         }
+        workspaceAccessService.requireCurrentUserActiveMember(workspaceId);
         return activityLogRepository.findByWorkspaceId(workspaceId).stream()
                 .map(activityLogMapper::toActivityLogResponse)
                 .toList();

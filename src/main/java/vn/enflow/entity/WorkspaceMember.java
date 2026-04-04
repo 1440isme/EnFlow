@@ -21,13 +21,14 @@ public class WorkspaceMember {
     // ── Relationships với entity đã tồn tại ──────────────────────────────────
 
     // workspace_members.workspace_id → workspaces.workspace_id
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    /** Không cascade ALL: tránh khi xóa member Hibernate merge Workspace với owner null. */
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("workspaceId")
     @JoinColumn(name = "workspace_id")
     Workspace workspace;
 
     // workspace_members.user_id → users.user_id
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
     @JoinColumn(name = "user_id")
     User user;
@@ -43,6 +44,8 @@ public class WorkspaceMember {
     Boolean isActive = true;
 
     public enum RoleInWorkspace {
-        owner, admin, member, guest
+        owner,
+        member,
+        guest
     }
 }
