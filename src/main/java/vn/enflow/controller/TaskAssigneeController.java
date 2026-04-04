@@ -32,7 +32,12 @@ public class TaskAssigneeController {
     }
 
     @GetMapping("/users/{userId}")
-    ResponseEntity<List<TaskAssigneeResponse>> getAssignmentsByUser(@PathVariable Long userId) {
+    ResponseEntity<List<TaskAssigneeResponse>> getAssignmentsByUser(
+            @PathVariable Long userId,
+            @RequestParam(required = false) Long workspaceId) {
+        if (workspaceId != null) {
+            return ResponseEntity.ok(taskAssigneeService.getAssignmentsByUserIdAndWorkspaceId(userId, workspaceId));
+        }
         return ResponseEntity.ok(taskAssigneeService.getAssignmentsByUserId(userId));
     }
 

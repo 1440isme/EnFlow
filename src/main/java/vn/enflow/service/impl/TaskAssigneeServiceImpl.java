@@ -88,6 +88,17 @@ public class TaskAssigneeServiceImpl implements ITaskAssigneeService {
     }
 
     @Override
+    public List<TaskAssigneeResponse> getAssignmentsByUserIdAndWorkspaceId(Long userId, Long workspaceId) {
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("Không tìm thấy user với id: " + userId);
+        }
+
+        return taskAssigneeRepository.findByUserIdAndWorkspaceId(userId, workspaceId).stream()
+                .map(taskAssigneeMapper::toTaskAssigneeResponse)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public TaskAssigneeResponse updateAssignee(Long taskId, Long userId, TaskAssigneeUpdateRequest request) {
         TaskAssigneeId assigneeId = new TaskAssigneeId(taskId, userId);
