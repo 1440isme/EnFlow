@@ -1,23 +1,24 @@
+# Giá trị thực tế: file .env ở thư mục gốc project (đã gitignore) hoặc biến môi trường hệ thống / Docker.
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
   servlet:
-    context-path: /enflow
+    context-path: ${SERVER_SERVLET_CONTEXT_PATH:/enflow}
+
 enflow:
   jwt:
-    # Tối thiểu 256 bit cho HS256 — đổi giá trị này trên môi trường thật (biến môi trường / vault)
-    secret: "7f3e9c2a1b8d4e6f0a5c9b2d8e1f4a7c3b6d9e2f5a8c1b4d7e0f3a6c9b2d5e8f1"
-    expiration-ms: 86400000
+    secret: ${ENFLOW_JWT_SECRET}
+    expiration-ms: ${ENFLOW_JWT_EXPIRATION_MS:86400000}
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/EnFlow
-    username: root
-    password: root
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/EnFlow}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     properties:
       hibernate:
         format_sql: false
