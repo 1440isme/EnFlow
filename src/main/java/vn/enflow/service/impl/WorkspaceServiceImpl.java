@@ -13,10 +13,14 @@ import vn.enflow.entity.Workspace;
 import vn.enflow.entity.WorkspaceMember;
 import vn.enflow.entity.WorkspaceMemberId;
 import vn.enflow.mapper.WorkspaceMapper;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import vn.enflow.repository.UserRepository;
 import vn.enflow.repository.WorkspaceMemberRepository;
 import vn.enflow.repository.WorkspaceRepository;
+import vn.enflow.security.SecurityUtils;
 import vn.enflow.service.IWorkspaceService;
+import vn.enflow.service.WorkspaceAccessService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,10 +34,28 @@ public class WorkspaceServiceImpl implements IWorkspaceService {
     WorkspaceMemberRepository workspaceMemberRepository;
     UserRepository userRepository;
     WorkspaceMapper workspaceMapper;
+    WorkspaceAccessService workspaceAccessService;
 
     @Override
     @Transactional
     public WorkspaceResponse create(WorkspaceRequest request) {
+        Long currentUserId = SecurityUtils.currentUserId();
+        if (request.getOwnerUserId() == null || !request.getOwnerUserId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ được tạo workspace với bạn là chủ sở hữu");
+        }
+        return persistNewWorkspace(request);
+    }
+
+    @Override
+    @Transactional
+    public WorkspaceResponse createDuringRegistration(WorkspaceRequest request) {
+        if (request.getOwnerUserId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ownerUserId là bắt buộc");
+        }
+        return persistNewWorkspace(request);
+    }
+
+    private WorkspaceResponse persistNewWorkspace(WorkspaceRequest request) {
         if (request.getWorkspaceKey() != null && workspaceRepository.existsByWorkspaceKey(request.getWorkspaceKey())) {
             throw new RuntimeException("Workspace key đã tồn tại");
         }
@@ -54,7 +76,6 @@ public class WorkspaceServiceImpl implements IWorkspaceService {
 
         Workspace saved = workspaceRepository.save(workspace);
 
-        // Tự động thêm owner vào workspace_members với role = owner
         WorkspaceMember ownerMember = WorkspaceMember.builder()
                 .id(new WorkspaceMemberId(saved.getWorkspaceId(), owner.getUserId()))
                 .workspace(saved)
@@ -72,12 +93,14 @@ public class WorkspaceServiceImpl implements IWorkspaceService {
     public WorkspaceResponse findById(Long id) {
         Workspace workspace = workspaceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy workspace với id: " + id));
+        workspaceAccessService.requireActiveMembership(id, SecurityUtils.currentUserId());
         return workspaceMapper.toWorkspaceResponse(workspace);
     }
 
     @Override
-    public List<WorkspaceResponse> findAll() {
-        return workspaceRepository.findAll().stream()
+    public List<WorkspaceResponse> findAccessibleForCurrentUser() {
+        Long userId = SecurityUtils.currentUserId();
+        return workspaceRepository.findAllByActiveMemberUserId(userId).stream()
                 .map(workspaceMapper::toWorkspaceResponse)
                 .toList();
     }
@@ -94,6 +117,9 @@ public class WorkspaceServiceImpl implements IWorkspaceService {
     public WorkspaceResponse update(Long id, WorkspaceUpdateRequest request) {
         Workspace workspace = workspaceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy workspace với id: " + id));
+        if (!workspace.getOwner().getUserId().equals(SecurityUtils.currentUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ chủ sở hữu mới chỉnh sửa workspace");
+        }
 
         workspaceMapper.updateWorkspace(workspace, request);
         workspace.setUpdatedAt(LocalDateTime.now());
@@ -104,8 +130,10 @@ public class WorkspaceServiceImpl implements IWorkspaceService {
     @Override
     @Transactional
     public void delete(Long id) {
-        if (!workspaceRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy workspace với id: " + id);
+        Workspace workspace = workspaceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy workspace với id: " + id));
+        if (!workspace.getOwner().getUserId().equals(SecurityUtils.currentUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ chủ sở hữu mới xóa workspace");
         }
         workspaceRepository.deleteById(id);
     }

@@ -11,6 +11,9 @@ import vn.enflow.dto.request.WorkspaceRequest;
 import vn.enflow.dto.request.WorkspaceUpdateRequest;
 import vn.enflow.dto.respone.WorkspaceMemberResponse;
 import vn.enflow.dto.respone.WorkspaceResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+import vn.enflow.security.SecurityUtils;
 import vn.enflow.service.IWorkspaceMemberService;
 import vn.enflow.service.IWorkspaceService;
 
@@ -33,8 +36,8 @@ public class WorkspaceController {
     }
 
     @GetMapping
-    ResponseEntity<List<WorkspaceResponse>> findAll() {
-        return ResponseEntity.ok(workspaceService.findAll());
+    ResponseEntity<List<WorkspaceResponse>> listAccessible() {
+        return ResponseEntity.ok(workspaceService.findAccessibleForCurrentUser());
     }
 
     @GetMapping("/{workspaceId}")
@@ -44,6 +47,9 @@ public class WorkspaceController {
 
     @GetMapping("/owner/{ownerUserId}")
     ResponseEntity<List<WorkspaceResponse>> findByOwner(@PathVariable Long ownerUserId) {
+        if (!SecurityUtils.currentUserId().equals(ownerUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ xem được workspace bạn sở hữu");
+        }
         return ResponseEntity.ok(workspaceService.findByOwner(ownerUserId));
     }
 

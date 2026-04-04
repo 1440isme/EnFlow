@@ -16,6 +16,8 @@ import vn.enflow.mapper.TaskAssigneeMapper;
 import vn.enflow.repository.TaskAssigneeRepository;
 import vn.enflow.repository.TaskRepository;
 import vn.enflow.repository.UserRepository;
+import vn.enflow.security.SecurityUtils;
+import vn.enflow.service.INotificationService;
 import vn.enflow.service.ITaskAssigneeService;
 
 import java.time.LocalDateTime;
@@ -30,6 +32,7 @@ public class TaskAssigneeServiceImpl implements ITaskAssigneeService {
     TaskRepository taskRepository;
     UserRepository userRepository;
     TaskAssigneeMapper taskAssigneeMapper;
+    INotificationService notificationService;
 
     @Override
     @Transactional
@@ -62,7 +65,19 @@ public class TaskAssigneeServiceImpl implements ITaskAssigneeService {
                 .isPrimary(isPrimary)
                 .build();
 
-        return taskAssigneeMapper.toTaskAssigneeResponse(taskAssigneeRepository.save(assignee));
+        TaskAssigneeResponse response =
+                taskAssigneeMapper.toTaskAssigneeResponse(taskAssigneeRepository.save(assignee));
+
+        try {
+            Long actorId = SecurityUtils.currentUserId();
+            if (!request.getUserId().equals(actorId)) {
+                notificationService.createTaskAssignedNotification(user, task);
+            }
+        } catch (Exception ignored) {
+            /* thông báo không làm fail gán task */
+        }
+
+        return response;
     }
 
     @Override

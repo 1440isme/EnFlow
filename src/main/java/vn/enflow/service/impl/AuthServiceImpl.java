@@ -58,7 +58,7 @@ public class AuthServiceImpl implements IAuthService {
                     .password(request.getPassword())
                     .fullName(request.getFullName().trim())
                     .build());
-            workspaceService.create(WorkspaceRequest.builder()
+            workspaceService.createDuringRegistration(WorkspaceRequest.builder()
                     .name(request.getFullName().trim() + " – Cá nhân")
                     .workspaceKey("personal-" + created.getUserId())
                     .description("Không gian cá nhân")

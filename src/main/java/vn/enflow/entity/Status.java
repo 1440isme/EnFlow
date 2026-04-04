@@ -75,7 +75,6 @@ public class Status {
         }
     }
 
-
     @Converter(autoApply = true)
     public static class StatusGroupConverter implements AttributeConverter<StatusGroup, String> {
         @Override

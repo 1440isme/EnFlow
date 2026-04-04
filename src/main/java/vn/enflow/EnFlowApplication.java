@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class EnFlowApplication {
 
     public static void main(String[] args) {
+        DotEnvLoader.load();
         SpringApplication.run(EnFlowApplication.class, args);
     }
-
 }

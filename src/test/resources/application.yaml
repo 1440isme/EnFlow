@@ -1,0 +1,15 @@
+# @SpringBootTest không chạy main() → không nạp file .env; dùng H2 in-memory cho contextLoads.
+enflow:
+  jwt:
+    secret: test-jwt-secret-must-be-at-least-32-chars-long
+    expiration-ms: 86400000
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:enflowtest;DB_CLOSE_DELAY=-1;MODE=MySQL
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop

@@ -43,9 +43,12 @@ public class ProjectListServiceImpl implements IProjectListService {
         projectList.setCreatedAt(now);
         projectList.setUpdatedAt(now);
 
-        if (projectList.getPosition() == null) projectList.setPosition(0);
-        if (projectList.getIsPrivate() == null) projectList.setIsPrivate(false);
-        if (projectList.getArchived() == null) projectList.setArchived(false);
+        if (projectList.getPosition() == null)
+            projectList.setPosition(0);
+        if (projectList.getIsPrivate() == null)
+            projectList.setIsPrivate(false);
+        if (projectList.getArchived() == null)
+            projectList.setArchived(false);
 
         ProjectList saved = projectListRepository.save(projectList);
 
