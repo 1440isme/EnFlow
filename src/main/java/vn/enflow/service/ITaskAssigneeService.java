@@ -10,6 +10,9 @@ public interface ITaskAssigneeService {
     TaskAssigneeResponse addAssignee(Long taskId, TaskAssigneeRequest request);
     List<TaskAssigneeResponse> getAssigneesByTaskId(Long taskId);
     List<TaskAssigneeResponse> getAssignmentsByUserId(Long userId);
+
+    /** Assignments whose task belongs to a project in the given workspace. */
+    List<TaskAssigneeResponse> getAssignmentsByUserIdAndWorkspaceId(Long userId, Long workspaceId);
     TaskAssigneeResponse updateAssignee(Long taskId, Long userId, TaskAssigneeUpdateRequest request);
     void removeAssignee(Long taskId, Long userId);
 }
