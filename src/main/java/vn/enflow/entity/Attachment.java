@@ -30,7 +30,8 @@ public class Attachment {
     @Column(name = "file_name")
     String fileName;
 
-    @Column(name = "file_url")
+    @Lob
+    @Column(name = "file_url", columnDefinition = "LONGTEXT")
     String fileUrl;
 
     @Column(name = "mime_type")
