@@ -8,6 +8,9 @@ enflow:
   jwt:
     secret: ${ENFLOW_JWT_SECRET}
     expiration-ms: ${ENFLOW_JWT_EXPIRATION_MS:86400000}
+  cors:
+    # Nhiều origin: cách nhau bằng dấu phẩy, ví dụ: https://app.example.com,https://www.example.com
+    allowed-origins: ${ENFLOW_CORS_ALLOWED_ORIGINS:http://localhost:3000}
 
 spring:
   datasource:
