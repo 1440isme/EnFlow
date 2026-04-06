@@ -27,6 +27,9 @@ public interface IUserService {
 
     UserResponse findById(Long id);
 
+    /** Batch fetch user profiles by ids (authenticated). */
+    List<UserResponse> findByIds(List<Long> ids);
+
     List<UserResponse> findAll();
 
     void deleteById(Long id);

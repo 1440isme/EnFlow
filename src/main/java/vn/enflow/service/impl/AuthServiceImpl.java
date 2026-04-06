@@ -49,6 +49,9 @@ public class AuthServiceImpl implements IAuthService {
         if (!StringUtils.hasText(request.getPassword())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu không được để trống");
         }
+        if (request.getPassword().length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu phải có tối thiểu 8 ký tự");
+        }
         String emailNormalized = normalizeEmailOrThrow(request.getEmail());
         // Username trong DB = email (định danh duy nhất; xác thực/xác minh sau này đều qua email).
         try {

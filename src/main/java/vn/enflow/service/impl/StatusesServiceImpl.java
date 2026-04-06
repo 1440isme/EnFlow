@@ -15,7 +15,9 @@ import vn.enflow.mapper.StatusMapper;
 import vn.enflow.repository.ProjectListRepository;
 import vn.enflow.repository.ProjectRepository;
 import vn.enflow.repository.StatusRepository;
+import vn.enflow.security.SecurityUtils;
 import vn.enflow.service.IStatusesService;
+import vn.enflow.service.WorkspaceAccessService;
 
 import java.util.List;
 
@@ -28,12 +30,14 @@ public class StatusesServiceImpl implements IStatusesService {
     ProjectRepository projectRepository;
     ProjectListRepository projectListRepository;
     StatusMapper statusMapper;
+    WorkspaceAccessService workspaceAccessService;
 
     @Override
     @Transactional
     public StatusesRespone createtionStatus(Long projectId, Long listId, StatusesCreatetionRequest request) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireWriteAccess(project.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         ProjectList list = projectListRepository.findById(listId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
@@ -88,6 +92,7 @@ public class StatusesServiceImpl implements IStatusesService {
     public StatusesRespone updateStatus(Long statusId, StatusesUpdateRequest request) {
         Status status = statusRepository.findById(statusId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy status với id: " + statusId));
+        workspaceAccessService.requireWriteAccess(status.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         statusMapper.updateStatus(status, request);
 
@@ -97,9 +102,9 @@ public class StatusesServiceImpl implements IStatusesService {
     @Override
     @Transactional
     public void deleteStatus(Long statusId) {
-        if (!statusRepository.existsById(statusId)) {
-            throw new RuntimeException("Không tìm thấy status với id: " + statusId);
-        }
+        Status status = statusRepository.findById(statusId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy status với id: " + statusId));
+        workspaceAccessService.requireWriteAccess(status.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         statusRepository.deleteById(statusId);
     }
 }

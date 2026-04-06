@@ -11,7 +11,9 @@ import vn.enflow.dto.respone.TaskResponse;
 import vn.enflow.entity.*;
 import vn.enflow.mapper.TaskMapper;
 import vn.enflow.repository.*;
+import vn.enflow.security.SecurityUtils;
 import vn.enflow.service.ITaskService;
+import vn.enflow.service.WorkspaceAccessService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +29,7 @@ public class TaskServiceImpl implements ITaskService {
     StatusRepository statusRepository;
     UserRepository userRepository;
     TaskMapper taskMapper;
+    WorkspaceAccessService workspaceAccessService;
 
     @Override
     @Transactional
@@ -37,6 +40,7 @@ public class TaskServiceImpl implements ITaskService {
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireWriteAccess(project.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         ProjectList list = projectListRepository.findById(listId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
@@ -126,6 +130,7 @@ public class TaskServiceImpl implements ITaskService {
     public TaskResponse updateTask(Long taskId, TaskUpdateRequest request) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
+        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         if (request.getTaskCode() != null && !request.getTaskCode().equals(task.getTaskCode())
                 && taskRepository.existsByTaskCode(request.getTaskCode())) {
@@ -179,9 +184,9 @@ public class TaskServiceImpl implements ITaskService {
     @Override
     @Transactional
     public void deleteTask(Long taskId) {
-        if (!taskRepository.existsById(taskId)) {
-            throw new RuntimeException("Không tìm thấy task với id: " + taskId);
-        }
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
+        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         taskRepository.deleteById(taskId);
     }
 

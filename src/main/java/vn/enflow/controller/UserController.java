@@ -17,6 +17,8 @@ import vn.enflow.security.SecurityUtils;
 import vn.enflow.service.IUserService;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -88,6 +90,24 @@ public class UserController {
     @GetMapping("/{userId}")
     ResponseEntity<UserResponse> findById(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.findById(userId));
+    }
+
+    @PostMapping("/batch")
+    ResponseEntity<Map<Long, UserResponse>> findByIds(@RequestBody List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return ResponseEntity.ok(Map.of());
+        }
+        List<Long> ids = userIds.stream()
+                .filter(id -> id != null && id > 0)
+                .distinct()
+                .toList();
+        if (ids.isEmpty()) {
+            return ResponseEntity.ok(Map.of());
+        }
+        return ResponseEntity.ok(
+                userService.findByIds(ids).stream()
+                        .collect(Collectors.toMap(UserResponse::getUserId, r -> r, (a, b) -> a))
+        );
     }
 
     @PutMapping("/{userId}")
