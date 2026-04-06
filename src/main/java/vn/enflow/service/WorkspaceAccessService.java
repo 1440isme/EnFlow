@@ -28,7 +28,20 @@ public class WorkspaceAccessService {
         return member;
     }
 
+    /** Chặn Guest khỏi mọi thao tác ghi (POST/PUT/DELETE). */
+    public WorkspaceMember requireWriteAccess(Long workspaceId, Long userId) {
+        WorkspaceMember member = requireActiveMembership(workspaceId, userId);
+        if (member.getRoleInWorkspace() == WorkspaceMember.RoleInWorkspace.guest) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Guest chỉ được xem");
+        }
+        return member;
+    }
+
     public void requireCurrentUserActiveMember(Long workspaceId) {
         requireActiveMembership(workspaceId, SecurityUtils.currentUserId());
+    }
+
+    public void requireCurrentUserWriteAccess(Long workspaceId) {
+        requireWriteAccess(workspaceId, SecurityUtils.currentUserId());
     }
 }

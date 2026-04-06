@@ -12,6 +12,7 @@ import java.util.List;
 @Repository
 public interface TaskAssigneeRepository extends JpaRepository<TaskAssignee, TaskAssigneeId> {
     List<TaskAssignee> findById_TaskId(Long taskId);
+    List<TaskAssignee> findById_TaskIdIn(List<Long> taskIds);
     List<TaskAssignee> findById_UserId(Long userId);
 
     @Query(

@@ -15,7 +15,9 @@ import vn.enflow.mapper.TaskTagMapper;
 import vn.enflow.repository.TagRepository;
 import vn.enflow.repository.TaskRepository;
 import vn.enflow.repository.TaskTagRepository;
+import vn.enflow.security.SecurityUtils;
 import vn.enflow.service.ITaskTagService;
+import vn.enflow.service.WorkspaceAccessService;
 
 import java.util.List;
 
@@ -28,6 +30,7 @@ public class TaskTagServiceImpl implements ITaskTagService {
     TaskRepository taskRepository;
     TagRepository tagRepository;
     TaskTagMapper taskTagMapper;
+    WorkspaceAccessService workspaceAccessService;
 
     @Override
     @Transactional
@@ -38,6 +41,7 @@ public class TaskTagServiceImpl implements ITaskTagService {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
+        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         Tag tag = tagRepository.findById(request.getTagId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + request.getTagId()));
@@ -58,9 +62,9 @@ public class TaskTagServiceImpl implements ITaskTagService {
 
     @Override
     public List<TaskTagResponse> getTagsByTaskId(Long taskId) {
-        if (!taskRepository.existsById(taskId)) {
-            throw new RuntimeException("Không tìm thấy task với id: " + taskId);
-        }
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
+        workspaceAccessService.requireActiveMembership(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         return taskTagRepository.findById_TaskId(taskId).stream()
                 .map(taskTagMapper::toTaskTagResponse)
@@ -81,6 +85,9 @@ public class TaskTagServiceImpl implements ITaskTagService {
     @Override
     @Transactional
     public void removeTagFromTask(Long taskId, Long tagId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
+        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         TaskTagId taskTagId = new TaskTagId(taskId, tagId);
         if (!taskTagRepository.existsById(taskTagId)) {
             throw new RuntimeException("Không tìm thấy liên kết task-tag");

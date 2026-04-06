@@ -11,6 +11,7 @@ import vn.enflow.dto.respone.TaskAssigneeResponse;
 import vn.enflow.service.ITaskAssigneeService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/task-assignees")
@@ -29,6 +30,11 @@ public class TaskAssigneeController {
     @GetMapping("/tasks/{taskId}")
     ResponseEntity<List<TaskAssigneeResponse>> getAssigneesByTask(@PathVariable Long taskId) {
         return ResponseEntity.ok(taskAssigneeService.getAssigneesByTaskId(taskId));
+    }
+
+    @PostMapping("/tasks/batch")
+    ResponseEntity<Map<Long, List<TaskAssigneeResponse>>> getAssigneesByTasks(@RequestBody List<Long> taskIds) {
+        return ResponseEntity.ok(taskAssigneeService.getAssigneesByTaskIds(taskIds));
     }
 
     @GetMapping("/users/{userId}")

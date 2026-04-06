@@ -15,7 +15,9 @@ import vn.enflow.mapper.AttachmentMapper;
 import vn.enflow.repository.AttachmentRepository;
 import vn.enflow.repository.TaskRepository;
 import vn.enflow.repository.UserRepository;
+import vn.enflow.security.SecurityUtils;
 import vn.enflow.service.IAttachmentService;
+import vn.enflow.service.WorkspaceAccessService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +31,7 @@ public class AttachmentServiceImpl implements IAttachmentService {
     TaskRepository taskRepository;
     UserRepository userRepository;
     AttachmentMapper attachmentMapper;
+    WorkspaceAccessService workspaceAccessService;
 
     @Override
     @Transactional
@@ -39,6 +42,7 @@ public class AttachmentServiceImpl implements IAttachmentService {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
+        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         User uploader = userRepository.findById(request.getUploadedBy())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + request.getUploadedBy()));
@@ -56,14 +60,17 @@ public class AttachmentServiceImpl implements IAttachmentService {
     public AttachmentResponse getAttachmentById(Long attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy attachment với id: " + attachmentId));
+        Task task = taskRepository.findById(attachment.getTaskId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + attachment.getTaskId()));
+        workspaceAccessService.requireActiveMembership(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         return attachmentMapper.toAttachmentResponse(attachment);
     }
 
     @Override
     public List<AttachmentResponse> getAttachmentsByTaskId(Long taskId) {
-        if (!taskRepository.existsById(taskId)) {
-            throw new RuntimeException("Không tìm thấy task với id: " + taskId);
-        }
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
+        workspaceAccessService.requireActiveMembership(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         return attachmentRepository.findByTaskId(taskId).stream()
                 .map(attachmentMapper::toAttachmentResponse)
                 .toList();
@@ -74,6 +81,9 @@ public class AttachmentServiceImpl implements IAttachmentService {
     public AttachmentResponse updateAttachment(Long attachmentId, AttachmentUpdateRequest request) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy attachment với id: " + attachmentId));
+        Task task = taskRepository.findById(attachment.getTaskId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + attachment.getTaskId()));
+        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         attachmentMapper.updateAttachment(attachment, request);
 
@@ -84,9 +94,11 @@ public class AttachmentServiceImpl implements IAttachmentService {
     @Override
     @Transactional
     public void deleteAttachment(Long attachmentId) {
-        if (!attachmentRepository.existsById(attachmentId)) {
-            throw new RuntimeException("Không tìm thấy attachment với id: " + attachmentId);
-        }
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy attachment với id: " + attachmentId));
+        Task task = taskRepository.findById(attachment.getTaskId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + attachment.getTaskId()));
+        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         attachmentRepository.deleteById(attachmentId);
     }
 }

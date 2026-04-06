@@ -15,7 +15,9 @@ import vn.enflow.mapper.ProjectListMapper;
 import vn.enflow.repository.ProjectListRepository;
 import vn.enflow.repository.ProjectRepository;
 import vn.enflow.repository.StatusRepository;
+import vn.enflow.security.SecurityUtils;
 import vn.enflow.service.IProjectListService;
+import vn.enflow.service.WorkspaceAccessService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,12 +31,14 @@ public class ProjectListServiceImpl implements IProjectListService {
     ProjectRepository projectRepository;
     ProjectListMapper projectListMapper;
     StatusRepository statusRepository;
+    WorkspaceAccessService workspaceAccessService;
 
     @Override
     @Transactional
     public ProjectListResponse createtionProjectList(Long projectId, ProjectListCreatetionRequest request) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireWriteAccess(project.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         ProjectList projectList = projectListMapper.toProjectList(request);
         projectList.setProject(project);
@@ -103,6 +107,7 @@ public class ProjectListServiceImpl implements IProjectListService {
     public ProjectListResponse updateProjectList(Long listId, ProjectListUpdateRequest request) {
         ProjectList projectList = projectListRepository.findById(listId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
+        workspaceAccessService.requireWriteAccess(projectList.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         projectListMapper.updateProjectList(projectList, request);
         projectList.setUpdatedAt(LocalDateTime.now());
@@ -113,9 +118,9 @@ public class ProjectListServiceImpl implements IProjectListService {
     @Override
     @Transactional
     public void deleteProjectList(Long listId) {
-        if (!projectListRepository.existsById(listId)) {
-            throw new RuntimeException("Không tìm thấy list với id: " + listId);
-        }
+        ProjectList projectList = projectListRepository.findById(listId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
+        workspaceAccessService.requireWriteAccess(projectList.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         projectListRepository.deleteById(listId);
     }
 }

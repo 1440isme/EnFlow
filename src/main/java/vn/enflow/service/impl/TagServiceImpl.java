@@ -13,6 +13,7 @@ import vn.enflow.entity.Workspace;
 import vn.enflow.mapper.TagMapper;
 import vn.enflow.repository.TagRepository;
 import vn.enflow.repository.WorkspaceRepository;
+import vn.enflow.security.SecurityUtils;
 import vn.enflow.service.ITagService;
 import vn.enflow.service.WorkspaceAccessService;
 
@@ -33,7 +34,7 @@ public class TagServiceImpl implements ITagService {
     public TagResponse createtionTag(Long workspaceId, TagCreatetionRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy workspace với id: " + workspaceId));
-        workspaceAccessService.requireCurrentUserActiveMember(workspaceId);
+        workspaceAccessService.requireWriteAccess(workspaceId, SecurityUtils.currentUserId());
 
         Tag tag = tagMapper.toTag(request);
         tag.setWorkspace(workspace);
@@ -69,7 +70,7 @@ public class TagServiceImpl implements ITagService {
     public TagResponse updateTag(Long tagId, TagUpdateRequest request) {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + tagId));
-        workspaceAccessService.requireCurrentUserActiveMember(tag.getWorkspace().getWorkspaceId());
+        workspaceAccessService.requireWriteAccess(tag.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         tagMapper.updateTag(tag, request);
         return tagMapper.toTagResponse(tagRepository.save(tag));
@@ -80,7 +81,7 @@ public class TagServiceImpl implements ITagService {
     public void deleteTag(Long tagId) {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + tagId));
-        workspaceAccessService.requireCurrentUserActiveMember(tag.getWorkspace().getWorkspaceId());
+        workspaceAccessService.requireWriteAccess(tag.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         tagRepository.deleteById(tagId);
     }
 }
