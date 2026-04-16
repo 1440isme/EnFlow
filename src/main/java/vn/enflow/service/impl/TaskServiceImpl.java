@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import vn.enflow.dto.request.TaskCreatetionRequest;
 import vn.enflow.dto.request.TaskUpdateRequest;
 import vn.enflow.dto.respone.TaskResponse;
@@ -17,6 +18,7 @@ import vn.enflow.service.WorkspaceAccessService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +42,7 @@ public class TaskServiceImpl implements ITaskService {
 
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
-        workspaceAccessService.requireWriteAccess(project.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireCurrentUserOwnerAccess(project.getWorkspace().getWorkspaceId());
 
         ProjectList list = projectListRepository.findById(listId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
@@ -92,14 +94,15 @@ public class TaskServiceImpl implements ITaskService {
     public TaskResponse getTaskById(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
+        workspaceAccessService.requireCurrentUserActiveMember(task.getProject().getWorkspace().getWorkspaceId());
         return taskMapper.toTaskResponse(task);
     }
 
     @Override
     public List<TaskResponse> getTasksByProjectId(Long projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new RuntimeException("Không tìm thấy project với id: " + projectId);
-        }
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireCurrentUserActiveMember(project.getWorkspace().getWorkspaceId());
         return taskRepository.findByProject_ProjectId(projectId).stream()
                 .map(taskMapper::toTaskResponse)
                 .toList();
@@ -107,9 +110,9 @@ public class TaskServiceImpl implements ITaskService {
 
     @Override
     public List<TaskResponse> getTasksByListId(Long listId) {
-        if (!projectListRepository.existsById(listId)) {
-            throw new RuntimeException("Không tìm thấy list với id: " + listId);
-        }
+        ProjectList list = projectListRepository.findById(listId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
+        workspaceAccessService.requireCurrentUserActiveMember(list.getProject().getWorkspace().getWorkspaceId());
         return taskRepository.findByList_ListId(listId).stream()
                 .map(taskMapper::toTaskResponse)
                 .toList();
@@ -117,9 +120,9 @@ public class TaskServiceImpl implements ITaskService {
 
     @Override
     public List<TaskResponse> getTasksByStatusId(Long statusId) {
-        if (!statusRepository.existsById(statusId)) {
-            throw new RuntimeException("Không tìm thấy status với id: " + statusId);
-        }
+        Status status = statusRepository.findById(statusId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy status với id: " + statusId));
+        workspaceAccessService.requireCurrentUserActiveMember(status.getProject().getWorkspace().getWorkspaceId());
         return taskRepository.findByStatus_StatusId(statusId).stream()
                 .map(taskMapper::toTaskResponse)
                 .toList();
@@ -130,7 +133,12 @@ public class TaskServiceImpl implements ITaskService {
     public TaskResponse updateTask(Long taskId, TaskUpdateRequest request) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        Long actorId = SecurityUtils.currentUserId();
+        WorkspaceMember actor = workspaceAccessService.requireTaskActionAccess(
+                task.getProject().getWorkspace().getWorkspaceId(),
+                taskId,
+                actorId);
+        assertMemberTaskUpdateAllowed(actor, request);
 
         if (request.getTaskCode() != null && !request.getTaskCode().equals(task.getTaskCode())
                 && taskRepository.existsByTaskCode(request.getTaskCode())) {
@@ -186,8 +194,35 @@ public class TaskServiceImpl implements ITaskService {
     public void deleteTask(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireCurrentUserOwnerAccess(task.getProject().getWorkspace().getWorkspaceId());
         taskRepository.deleteById(taskId);
+    }
+
+    private void assertMemberTaskUpdateAllowed(WorkspaceMember actor, TaskUpdateRequest request) {
+        if (actor.getRoleInWorkspace() != WorkspaceMember.RoleInWorkspace.member) {
+            return;
+        }
+        boolean touchesForbiddenField =
+                request.getReporterId() != null
+                        || request.getTaskCode() != null
+                        || request.getTitle() != null
+                        || request.getDescription() != null
+                        || request.getTaskType() != null
+                        || request.getPriority() != null
+                        || request.getDueDate() != null
+                        || request.getResolution() != null
+                        || request.getTimeEstimateDays() != null
+                        || request.getTimeSpentDays() != null
+                        || request.getPoints() != null
+                        || request.getPosition() != null
+                        || request.getIsPrivate() != null
+                        || request.getArchived() != null
+                        || request.getParentTaskId() != null;
+        if (touchesForbiddenField) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Member chỉ được cập nhật trạng thái hoặc di chuyển task trong project");
+        }
     }
 
     private Task getValidParentTask(Long parentTaskId, Long projectId, Long currentTaskId) {

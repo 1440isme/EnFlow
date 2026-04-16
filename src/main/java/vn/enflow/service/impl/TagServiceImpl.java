@@ -34,7 +34,7 @@ public class TagServiceImpl implements ITagService {
     public TagResponse createtionTag(Long workspaceId, TagCreatetionRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy workspace với id: " + workspaceId));
-        workspaceAccessService.requireWriteAccess(workspaceId, SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(workspaceId, SecurityUtils.currentUserId());
 
         Tag tag = tagMapper.toTag(request);
         tag.setWorkspace(workspace);
@@ -70,7 +70,7 @@ public class TagServiceImpl implements ITagService {
     public TagResponse updateTag(Long tagId, TagUpdateRequest request) {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + tagId));
-        workspaceAccessService.requireWriteAccess(tag.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(tag.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         tagMapper.updateTag(tag, request);
         return tagMapper.toTagResponse(tagRepository.save(tag));
@@ -81,7 +81,7 @@ public class TagServiceImpl implements ITagService {
     public void deleteTag(Long tagId) {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + tagId));
-        workspaceAccessService.requireWriteAccess(tag.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(tag.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         tagRepository.deleteById(tagId);
     }
 }

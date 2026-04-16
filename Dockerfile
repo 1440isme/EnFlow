@@ -1,7 +1,3 @@
-## EnFlow_BE Dockerfile (multi-stage)
-## - Build: Maven + Java 21
-## - Run: JRE 21 (nhỏ hơn JDK)
-
 FROM maven:3.9.8-amazoncorretto-21 AS build
 WORKDIR /app
 
