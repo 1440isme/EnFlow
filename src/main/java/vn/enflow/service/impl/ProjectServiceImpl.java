@@ -52,7 +52,7 @@ public class ProjectServiceImpl implements IProjectService {
     public ProjectResponse createtionProject(Long workspaceId, ProjectCreatetionRequest request) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy workspace với id: " + workspaceId));
-        workspaceAccessService.requireCurrentUserActiveMember(workspaceId);
+        workspaceAccessService.requireCurrentUserOwnerAccess(workspaceId);
 
         if (request.getProjectKey() != null && projectRepository.existsByProjectKey(request.getProjectKey())) {
             throw new RuntimeException("Project key đã tồn tại: " + request.getProjectKey());
@@ -194,7 +194,7 @@ public class ProjectServiceImpl implements IProjectService {
     public ProjectResponse updateProject(Long projectId, ProjectCreatetionRequest request) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
-        workspaceAccessService.requireCurrentUserActiveMember(project.getWorkspace().getWorkspaceId());
+        workspaceAccessService.requireCurrentUserOwnerAccess(project.getWorkspace().getWorkspaceId());
 
         projectMapper.updateProject(project, request);
         project.setUpdatedAt(LocalDateTime.now());
@@ -207,7 +207,7 @@ public class ProjectServiceImpl implements IProjectService {
     public void deleteProject(Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
-        workspaceAccessService.requireCurrentUserActiveMember(project.getWorkspace().getWorkspaceId());
+        workspaceAccessService.requireCurrentUserOwnerAccess(project.getWorkspace().getWorkspaceId());
         projectRepository.deleteById(projectId);
     }
 }

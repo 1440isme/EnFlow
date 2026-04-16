@@ -37,7 +37,7 @@ public class StatusesServiceImpl implements IStatusesService {
     public StatusesRespone createtionStatus(Long projectId, Long listId, StatusesCreatetionRequest request) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
-        workspaceAccessService.requireWriteAccess(project.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(project.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         ProjectList list = projectListRepository.findById(listId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
@@ -62,14 +62,15 @@ public class StatusesServiceImpl implements IStatusesService {
     public StatusesRespone getStatusById(Long statusId) {
         Status status = statusRepository.findById(statusId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy status với id: " + statusId));
+        workspaceAccessService.requireCurrentUserActiveMember(status.getProject().getWorkspace().getWorkspaceId());
         return statusMapper.toStatusesRespone(status);
     }
 
     @Override
     public List<StatusesRespone> getStatusesByProjectId(Long projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new RuntimeException("Không tìm thấy project với id: " + projectId);
-        }
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireCurrentUserActiveMember(project.getWorkspace().getWorkspaceId());
         return statusRepository.findByProject_ProjectId(projectId).stream()
                 .map(statusMapper::toStatusesRespone)
                 .sorted((s1, s2) -> s1.getPosition().compareTo(s2.getPosition()))
@@ -78,9 +79,9 @@ public class StatusesServiceImpl implements IStatusesService {
 
     @Override
     public List<StatusesRespone> getStatusesByListId(Long listId) {
-        if (!projectListRepository.existsById(listId)) {
-            throw new RuntimeException("Không tìm thấy list với id: " + listId);
-        }
+        ProjectList list = projectListRepository.findById(listId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
+        workspaceAccessService.requireCurrentUserActiveMember(list.getProject().getWorkspace().getWorkspaceId());
         return statusRepository.findByList_ListId(listId).stream()
                 .map(statusMapper::toStatusesRespone)
                 .sorted((s1, s2) -> s1.getPosition().compareTo(s2.getPosition()))
@@ -92,7 +93,7 @@ public class StatusesServiceImpl implements IStatusesService {
     public StatusesRespone updateStatus(Long statusId, StatusesUpdateRequest request) {
         Status status = statusRepository.findById(statusId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy status với id: " + statusId));
-        workspaceAccessService.requireWriteAccess(status.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(status.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         statusMapper.updateStatus(status, request);
 
@@ -104,7 +105,7 @@ public class StatusesServiceImpl implements IStatusesService {
     public void deleteStatus(Long statusId) {
         Status status = statusRepository.findById(statusId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy status với id: " + statusId));
-        workspaceAccessService.requireWriteAccess(status.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(status.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         statusRepository.deleteById(statusId);
     }
 }

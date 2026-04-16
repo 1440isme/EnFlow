@@ -36,16 +36,16 @@ public class AttachmentServiceImpl implements IAttachmentService {
     @Override
     @Transactional
     public AttachmentResponse createAttachment(Long taskId, AttachmentCreationRequest request) {
-        if (request.getUploadedBy() == null) {
-            throw new RuntimeException("uploadedBy là bắt buộc");
-        }
-
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        Long actorId = SecurityUtils.currentUserId();
+        workspaceAccessService.requireTaskActionAccess(
+                task.getProject().getWorkspace().getWorkspaceId(),
+                taskId,
+                actorId);
 
-        User uploader = userRepository.findById(request.getUploadedBy())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + request.getUploadedBy()));
+        User uploader = userRepository.findById(actorId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + actorId));
 
         Attachment attachment = attachmentMapper.toAttachment(request);
         attachment.setTaskId(task.getTaskId());
@@ -83,7 +83,14 @@ public class AttachmentServiceImpl implements IAttachmentService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy attachment với id: " + attachmentId));
         Task task = taskRepository.findById(attachment.getTaskId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + attachment.getTaskId()));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        Long actorId = SecurityUtils.currentUserId();
+        workspaceAccessService.requireTaskActionAccess(
+                task.getProject().getWorkspace().getWorkspaceId(),
+                task.getTaskId(),
+                actorId);
+        if (!actorId.equals(attachment.getUploadedBy())) {
+            throw new RuntimeException("Chỉ người tải lên mới được chỉnh sửa attachment");
+        }
 
         attachmentMapper.updateAttachment(attachment, request);
 
@@ -98,7 +105,14 @@ public class AttachmentServiceImpl implements IAttachmentService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy attachment với id: " + attachmentId));
         Task task = taskRepository.findById(attachment.getTaskId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + attachment.getTaskId()));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        Long actorId = SecurityUtils.currentUserId();
+        workspaceAccessService.requireTaskActionAccess(
+                task.getProject().getWorkspace().getWorkspaceId(),
+                task.getTaskId(),
+                actorId);
+        if (!actorId.equals(attachment.getUploadedBy())) {
+            throw new RuntimeException("Chỉ người tải lên mới được xóa attachment");
+        }
         attachmentRepository.deleteById(attachmentId);
     }
 }
