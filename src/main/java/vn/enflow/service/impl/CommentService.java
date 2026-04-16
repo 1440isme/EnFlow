@@ -33,9 +33,14 @@ public class CommentService implements ICommentService {
     public CommentResponse createComment(Long taskId, Comment comment) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        Long actorId = SecurityUtils.currentUserId();
+        workspaceAccessService.requireTaskActionAccess(
+                task.getProject().getWorkspace().getWorkspaceId(),
+                taskId,
+                actorId);
         comment.setCommentId(null);
         comment.setTaskId(taskId);
+        comment.setUserId(actorId);
 
         LocalDateTime now = LocalDateTime.now();
         comment.setCreatedAt(now);
@@ -76,7 +81,14 @@ public class CommentService implements ICommentService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy comment với id: " + commentId));
         Task task = taskRepository.findById(existingComment.getTaskId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + existingComment.getTaskId()));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        Long actorId = SecurityUtils.currentUserId();
+        workspaceAccessService.requireTaskActionAccess(
+                task.getProject().getWorkspace().getWorkspaceId(),
+                task.getTaskId(),
+                actorId);
+        if (!actorId.equals(existingComment.getUserId())) {
+            throw new RuntimeException("Chỉ người tạo comment mới được chỉnh sửa");
+        }
 
         if (comment.getContent() != null) {
             existingComment.setContent(comment.getContent());
@@ -96,7 +108,14 @@ public class CommentService implements ICommentService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy comment với id: " + commentId));
         Task task = taskRepository.findById(comment.getTaskId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + comment.getTaskId()));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        Long actorId = SecurityUtils.currentUserId();
+        workspaceAccessService.requireTaskActionAccess(
+                task.getProject().getWorkspace().getWorkspaceId(),
+                task.getTaskId(),
+                actorId);
+        if (!actorId.equals(comment.getUserId())) {
+            throw new RuntimeException("Chỉ người tạo comment mới được xóa");
+        }
 
         comment.setIsDeleted(true);
         comment.setUpdatedAt(LocalDateTime.now());

@@ -38,7 +38,7 @@ public class ProjectListServiceImpl implements IProjectListService {
     public ProjectListResponse createtionProjectList(Long projectId, ProjectListCreatetionRequest request) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
-        workspaceAccessService.requireWriteAccess(project.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(project.getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         ProjectList projectList = projectListMapper.toProjectList(request);
         projectList.setProject(project);
@@ -89,14 +89,15 @@ public class ProjectListServiceImpl implements IProjectListService {
     public ProjectListResponse getProjectListById(Long listId) {
         ProjectList projectList = projectListRepository.findById(listId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
+        workspaceAccessService.requireCurrentUserActiveMember(projectList.getProject().getWorkspace().getWorkspaceId());
         return projectListMapper.toProjectListResponse(projectList);
     }
 
     @Override
     public List<ProjectListResponse> getProjectListsByProjectId(Long projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new RuntimeException("Không tìm thấy project với id: " + projectId);
-        }
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy project với id: " + projectId));
+        workspaceAccessService.requireCurrentUserActiveMember(project.getWorkspace().getWorkspaceId());
         return projectListRepository.findByProject_ProjectId(projectId).stream()
                 .map(projectListMapper::toProjectListResponse)
                 .toList();
@@ -107,7 +108,7 @@ public class ProjectListServiceImpl implements IProjectListService {
     public ProjectListResponse updateProjectList(Long listId, ProjectListUpdateRequest request) {
         ProjectList projectList = projectListRepository.findById(listId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
-        workspaceAccessService.requireWriteAccess(projectList.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(projectList.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         projectListMapper.updateProjectList(projectList, request);
         projectList.setUpdatedAt(LocalDateTime.now());
@@ -120,7 +121,7 @@ public class ProjectListServiceImpl implements IProjectListService {
     public void deleteProjectList(Long listId) {
         ProjectList projectList = projectListRepository.findById(listId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy list với id: " + listId));
-        workspaceAccessService.requireWriteAccess(projectList.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(projectList.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         projectListRepository.deleteById(listId);
     }
 }

@@ -41,7 +41,9 @@ public class TaskTagServiceImpl implements ITaskTagService {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireCurrentUserTaskActionAccess(
+                task.getProject().getWorkspace().getWorkspaceId(),
+                taskId);
 
         Tag tag = tagRepository.findById(request.getTagId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tag với id: " + request.getTagId()));
@@ -87,7 +89,9 @@ public class TaskTagServiceImpl implements ITaskTagService {
     public void removeTagFromTask(Long taskId, Long tagId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireCurrentUserTaskActionAccess(
+                task.getProject().getWorkspace().getWorkspaceId(),
+                taskId);
         TaskTagId taskTagId = new TaskTagId(taskId, tagId);
         if (!taskTagRepository.existsById(taskTagId)) {
             throw new RuntimeException("Không tìm thấy liên kết task-tag");

@@ -14,6 +14,7 @@ public interface TaskAssigneeRepository extends JpaRepository<TaskAssignee, Task
     List<TaskAssignee> findById_TaskId(Long taskId);
     List<TaskAssignee> findById_TaskIdIn(List<Long> taskIds);
     List<TaskAssignee> findById_UserId(Long userId);
+    boolean existsById_TaskIdAndId_UserId(Long taskId, Long userId);
 
     @Query(
             "SELECT ta FROM TaskAssignee ta JOIN FETCH ta.task t JOIN FETCH ta.user u "

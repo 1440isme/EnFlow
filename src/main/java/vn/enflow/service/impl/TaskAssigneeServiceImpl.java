@@ -48,7 +48,7 @@ public class TaskAssigneeServiceImpl implements ITaskAssigneeService {
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
 
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy user với id: " + request.getUserId()));
@@ -136,6 +136,9 @@ public class TaskAssigneeServiceImpl implements ITaskAssigneeService {
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("Không tìm thấy user với id: " + userId);
         }
+        if (!SecurityUtils.currentUserId().equals(userId)) {
+            throw new RuntimeException("Không có quyền xem danh sách task của người dùng khác");
+        }
 
         return taskAssigneeRepository.findById_UserId(userId).stream()
                 .map(taskAssigneeMapper::toTaskAssigneeResponse)
@@ -146,6 +149,10 @@ public class TaskAssigneeServiceImpl implements ITaskAssigneeService {
     public List<TaskAssigneeResponse> getAssignmentsByUserIdAndWorkspaceId(Long userId, Long workspaceId) {
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("Không tìm thấy user với id: " + userId);
+        }
+        workspaceAccessService.requireCurrentUserActiveMember(workspaceId);
+        if (!SecurityUtils.currentUserId().equals(userId)) {
+            throw new RuntimeException("Không có quyền xem danh sách task của người dùng khác");
         }
 
         return taskAssigneeRepository.findByUserIdAndWorkspaceId(userId, workspaceId).stream()
@@ -158,7 +165,7 @@ public class TaskAssigneeServiceImpl implements ITaskAssigneeService {
     public TaskAssigneeResponse updateAssignee(Long taskId, Long userId, TaskAssigneeUpdateRequest request) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         TaskAssigneeId assigneeId = new TaskAssigneeId(taskId, userId);
         TaskAssignee assignee = taskAssigneeRepository.findById(assigneeId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy assignee của task"));
@@ -178,7 +185,7 @@ public class TaskAssigneeServiceImpl implements ITaskAssigneeService {
     public void removeAssignee(Long taskId, Long userId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy task với id: " + taskId));
-        workspaceAccessService.requireWriteAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
+        workspaceAccessService.requireOwnerAccess(task.getProject().getWorkspace().getWorkspaceId(), SecurityUtils.currentUserId());
         TaskAssigneeId assigneeId = new TaskAssigneeId(taskId, userId);
         if (!taskAssigneeRepository.existsById(assigneeId)) {
             throw new RuntimeException("Không tìm thấy assignee của task");
